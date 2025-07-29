@@ -1,0 +1,7 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/LeaveManagement/.vs
+/LeaveManagement/bin/Debug/net8.0
+/LeaveManagement/obj
