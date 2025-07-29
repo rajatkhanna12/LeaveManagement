@@ -1,0 +1,66 @@
+﻿@model List<LeaveManagement.Models.LeaveRequest>
+@{
+    ViewData["Title"] = "My Leaves";
+    Layout = "_ManagerLayout";
+}
+
+<div class="container mt-4">
+    <h2 class="mb-4">My Leave Applications</h2>
+
+    <table class="table table-bordered table-hover shadow-sm">
+        <thead class="table-dark">
+            <tr>
+                <th>#</th>
+                <th>Type</th>
+                <th>From</th>
+                <th>To</th>
+                <th>Half Day</th>
+                <th>Status</th>
+                <th>Applied On</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model != null && Model.Any())
+            {
+                int count = 1;
+                foreach (var leave in Model)
+                {
+                    <tr>
+                        <td>@count</td>
+                        <td>@leave.LeaveType</td>
+                        <td>@leave.StartDate.ToShortDateString()</td>
+                        <td>@leave.EndDate.ToShortDateString()</td>
+                        <td>@(leave.IsHalfDay ? "Yes" : "No")</td>
+                        <td>
+                            <span class="badge bg-@GetStatusClass(leave.Status.ToString())">
+                                @leave.Status
+                            </span>
+                        </td>
+                        <td>@leave.AppliedOn.ToShortDateString()</td>
+                        <td>
+                            <a class="btn btn-sm btn-outline-primary" asp-action="LeaveDetails" asp-route-id="@leave.Id">Details</a>
+                        </td>
+                    </tr>
+                    count++;
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="8" class="text-center text-muted">No leave records found.</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@functions {
+    public string GetStatusClass(string status) => status switch
+    {
+        "Approved" => "success",
+        "Rejected" => "danger",
+        "Pending" => "warning",
+        _ => "secondary"
+    };
+}

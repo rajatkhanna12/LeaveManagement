@@ -1,0 +1,74 @@
+﻿@model LeaveManagement.Models.LeaveRequest
+@{
+    Layout = "_ManagerLayout";
+}
+
+<hr class="my-12" />
+
+
+@{
+    ViewData["Title"] = "Apply for Leave";
+    var leaveTypes = ViewBag.LeaveTypes as List<LeaveManagement.Models.LeaveType>;
+}
+
+<div class="container mt-5">
+    <h2 class="mb-4">Apply for Leave</h2>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    <form asp-action="ApplyLeave" method="post" class="row g-3">
+        <div asp-validation-summary="All" class="text-danger"></div>
+
+        <div class="col-md-6">
+            <label asp-for="LeaveTypeId" class="form-label">Leave Type</label>
+            <select asp-for="LeaveTypeId" class="form-select" required>
+                <option value="">-- Select Leave Type --</option>
+                @foreach (var leaveType in leaveTypes)
+                {
+                    <option value="@leaveType.Id">@leaveType.Name</option>
+                }
+            </select>
+            <span asp-validation-for="LeaveTypeId" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-6">
+            <label asp-for="IsHalfDay" class="form-label">Is Half Day?</label>
+            <select asp-for="IsHalfDay" class="form-select" required>
+                <option value="false">No</option>
+                <option value="true">Yes</option>
+            </select>
+            <span asp-validation-for="IsHalfDay" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-6">
+            <label asp-for="StartDate" class="form-label">Start Date</label>
+            <input asp-for="StartDate" class="form-control" type="date" required />
+            <span asp-validation-for="StartDate" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-6">
+            <label asp-for="EndDate" class="form-label">End Date</label>
+            <input asp-for="EndDate" class="form-control" type="date" required />
+            <span asp-validation-for="EndDate" class="text-danger"></span>
+        </div>
+
+        <div class="col-12">
+            <label asp-for="Reason" class="form-label">Reason</label>
+            <textarea asp-for="Reason" class="form-control" rows="3" placeholder="Enter reason for leave..." required></textarea>
+            <span asp-validation-for="Reason" class="text-danger"></span>
+        </div>
+
+        <div class="col-12">
+            <button type="submit" class="btn btn-primary mt-2">Submit</button>
+            <a asp-action="MyLeaves" class="btn btn-secondary mt-2 ms-2">Cancel</a>
+        </div>
+    </form>
+</div>
+
+@* @section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+ *@
