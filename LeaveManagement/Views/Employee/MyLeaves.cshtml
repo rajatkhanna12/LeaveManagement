@@ -28,7 +28,7 @@
                 {
                     <tr>
                         <td>@count</td>
-                        <td>@leave.LeaveType</td>
+                        <td>@leave.LeaveType?.Name</td>
                         <td>@leave.StartDate.ToShortDateString()</td>
                         <td>@leave.EndDate.ToShortDateString()</td>
                         <td>@(leave.IsHalfDay ? "Yes" : "No")</td>
