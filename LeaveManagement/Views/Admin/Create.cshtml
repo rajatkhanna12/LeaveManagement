@@ -1,0 +1,83 @@
+﻿@model ApplicationUser
+@{
+    ViewData["Title"] = "Index";
+    Layout = "~/Views/Shared/_ManagerLayout.cshtml";
+}
+<form asp-action="Create" method="post">
+    <div class="content-wrapper">
+        <div class="container-xxl flex-grow-1 container-p-y">
+            <div class="row">
+                <div class="col-xl">
+                    <div class="card mb-6">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Create Employee</h5>
+                            <small class="text-muted float-end">Add a new employee</small>
+                        </div>
+                        <div class="card-body">
+
+                            <div class="mb-3">
+                                <label asp-for="FullName" class="form-label"></label>
+                                <div class="input-group input-group-merge">
+                                    <span class="input-group-text"><i class="bx bx-user"></i></span>
+                                    <input asp-for="FullName" class="form-control" placeholder="John Doe" />
+                                </div>
+                                <span asp-validation-for="FullName" class="text-danger"></span>
+                            </div>
+
+                            <div class="mb-3">
+                                <label asp-for="Email" class="form-label"></label>
+                                <div class="input-group input-group-merge">
+                                    <span class="input-group-text"><i class="bx bx-envelope"></i></span>
+                                    <input asp-for="Email" class="form-control" placeholder="john@example.com" />
+                                </div>
+                                <span asp-validation-for="Email" class="text-danger"></span>
+                            </div>
+
+                            <div class="mb-3">
+                                <label asp-for="PhoneNumber" class="form-label"></label>
+                                <div class="input-group input-group-merge">
+                                    <span class="input-group-text"><i class="bx bx-phone"></i></span>
+                                    <input asp-for="PhoneNumber" class="form-control" placeholder="123-456-7890" />
+                                </div>
+                                <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+                            </div>
+
+                            <div class="mb-3">
+                                <label asp-for="JoiningDate" class="form-label"></label>
+                                <input asp-for="JoiningDate" class="form-control" type="date" />
+                                <span asp-validation-for="JoiningDate" class="text-danger"></span>
+                            </div>
+
+                            <div class="mb-3">
+                                <label asp-for="BaseSalary" class="form-label"></label>
+                                <div class="input-group input-group-merge">
+                                    <span class="input-group-text">₹</span>
+                                    <input asp-for="BaseSalary" class="form-control" />
+                                </div>
+                                <span asp-validation-for="BaseSalary" class="text-danger"></span>
+                            </div>
+
+                            <div class="mb-3">
+                                <label asp-for="Role" class="form-label">Role</label>
+                                <select asp-for="Role" class="form-select">
+                                    <option value="">Select Role</option>
+                                    <option value="Employee">Employee</option>
+                                    <option value="Manager">Manager</option>
+                                    <option value="Admin">Admin</option>
+                                </select>
+                                <span asp-validation-for="Role" class="text-danger"></span>
+                            </div>
+
+                            <div class="mb-3 form-check">
+                                <input asp-for="IsActive" class="form-check-input" type="checkbox" />
+                                <label asp-for="IsActive" class="form-check-label">Is Active</label>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">Create</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>

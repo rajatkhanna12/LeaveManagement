@@ -1,6 +1,6 @@
 ﻿@model LeaveManagement.Models.LeaveRequest
 @{
-    Layout = "_ManagerLayout";
+    Layout = "_EmployeeLayout";
 }
 
 <hr class="my-12" />
@@ -42,6 +42,7 @@
             </select>
             <span asp-validation-for="IsHalfDay" class="text-danger"></span>
         </div>
+        
 
         <div class="col-md-6">
             <label asp-for="StartDate" class="form-label">Start Date</label>

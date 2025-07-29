@@ -1,0 +1,42 @@
+﻿@model LeaveManagement.Models.LeaveRequest
+
+@{
+    ViewData["Title"] = "Update Leave Status";
+    Layout = "~/Views/Shared/_ManagerLayout.cshtml";
+}
+
+<form asp-action="UpdateLeaveStatus" method="post">
+    <input type="hidden" asp-for="Id" />
+
+    <div class="container-xxl flex-grow-1 container-p-y">
+        <div class="row">
+            <div class="col-xl">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Update Leave Status</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">Employee</label>
+                            <input class="form-control" value="@Model.User.FullName" disabled />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Leave Type</label>
+                            <input class="form-control" value="@Model.LeaveType.Name" disabled />
+                        </div>
+                        <div class="mb-3">
+                            <label asp-for="Status" class="form-label">Status</label>
+                            <select asp-for="Status" class="form-select">
+                                <option value="Pending">Pending</option>
+                                <option value="Approved">Approved</option>
+                                <option value="Rejected">Rejected</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Update</button>
+                        <a asp-action="LeaveRequests" class="btn btn-secondary">Back</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>

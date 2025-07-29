@@ -35,14 +35,22 @@ namespace LeaveManagement.Controllers
 
             if (result.Succeeded)
             {
-                return RedirectToAction("Index", "Home");
+                if (user.Role == "Employee")
+                {
+                    return RedirectToAction("ApplyLeave", "Employee");
+                }
+                else if (user.Role == "Manager")
+                {
+                    return RedirectToAction("Index", "Admin");
+                }
+                
             }
 
             ModelState.AddModelError("", "Invalid login attempt.");
             return View(model);
         }
 
-        [HttpPost]
+     
         public async Task<IActionResult> Logout()
         {
             await _signInManager.SignOutAsync();

@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LeaveManagement.Controllers
 {
-    //[Authorize(Roles = "Employee")]
+    [Authorize(Roles = "Employee")]
     public class EmployeeController : Controller
     {
         private readonly LeaveDbContext _context;
@@ -30,11 +30,15 @@ namespace LeaveManagement.Controllers
         public async Task<IActionResult> ApplyLeave(LeaveRequest model)
         {
             var user = await _userManager.GetUserAsync(User);
-
+        
             if (model.StartDate > model.EndDate)
             {
                 ModelState.AddModelError("", "Start date must be before end date.");
             }
+            
+            model.UserId = user.Id;
+            model.Status = LeaveStatus.Pending;
+            model.AppliedOn = DateTime.UtcNow;
 
             if (!ModelState.IsValid)
             {
@@ -42,9 +46,7 @@ namespace LeaveManagement.Controllers
                 return View(model);
             }
 
-            model.UserId = user.Id;
-            model.Status = LeaveStatus.Pending;
-            model.AppliedOn = DateTime.UtcNow;
+           
 
             _context.LeaveRequests.Add(model);
             await _context.SaveChangesAsync();
