@@ -5,6 +5,8 @@
     var monthName = System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(DateTime.UtcNow.Month);
 }
 
+
+
 <div class="card border mb-4">
     <div class="card-header text-center">
         <h4 class="mb-0">Salary Slip</h4>
@@ -26,13 +28,24 @@
                     <th>Per Day Salary</th>
                     <td>₹@Model.PerDaySalary.ToString("N2")</td>
                 </tr>
+               
                 <tr>
-                    <th>Total Approved Leaves</th>
-                    <td>@Model.TotalLeaves</td>
+                    <th>Leaves Taken This Month</th>
+                    <td>@Model.LeavesTakenThisMonth</td>
                 </tr>
+               
                 <tr>
-                    <th>Leave Deductions</th>
-                    <td>@($"₹{(@Model.PerDaySalary * (decimal)Model.TotalLeaves):N2}")</td>
+                    <th>Leave Deductions (This Year)</th>
+                    <td>
+                        @if (Model.ExtraLeaveDays > 0)
+                        {
+                            @($"₹{(Model.PerDaySalary * (decimal)Model.ExtraLeaveDays):N2}")
+                        }
+                        else
+                        {
+                            <span class="text-success">No deductions</span>
+                        }
+                    </td>
                 </tr>
                 <tr>
                     <th><strong>Net Estimated Salary</strong></th>
@@ -41,10 +54,11 @@
             </tbody>
         </table>
 
-        <div class="text-end mt-3">
+       @*  <div class="text-end mt-3">
             <button onclick="window.print()" class="btn btn-primary">
                 <i class="bx bx-printer me-1"></i> Print
             </button>
-        </div>
+        </div> *@
     </div>
 </div>
+

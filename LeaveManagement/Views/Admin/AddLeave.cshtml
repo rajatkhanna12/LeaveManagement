@@ -12,14 +12,10 @@
     <div class="container mt-5">
         <h2 class="mb-4">Apply for Leave</h2>
 
-        @if (TempData["Success"] != null)
-        {
-            <div class="alert alert-success">@TempData["Success"]</div>
-        }
 
         <form asp-action="ApplyLeave" method="post" class="row g-3">
             <div asp-validation-summary="All" class="text-danger"></div>
-
+            <input type="hidden" name="UserId" value="@ViewBag.id" />
             <div class="col-md-6">
                 <label asp-for="LeaveTypeId" class="form-label">Leave Type</label>
                 <select asp-for="LeaveTypeId" class="form-select" required>
@@ -62,12 +58,8 @@
 
             <div class="col-12" style="margin-bottom:20px">
                 <button type="submit" class="btn btn-primary mt-2">Submit</button>
-                <a asp-action="MyLeaves" class="btn btn-secondary mt-2 ms-2">Cancel</a>
+                <a asp-action="LeaveByUser" class="btn btn-secondary mt-2 ms-2" asp-route-id="@ViewBag.id">Cancel</a>
             </div>
         </form>
     </div>
 </div>
-@* @section Scripts {
-    <partial name="_ValidationScriptsPartial" />
-}
- *@

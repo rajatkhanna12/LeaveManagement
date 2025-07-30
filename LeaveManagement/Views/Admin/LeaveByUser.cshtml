@@ -13,7 +13,9 @@
             <div class="card-header">
                 <h5 class="mb-0">Leave Requests for <strong>@employeeName</strong></h5>
             </div>
-
+            <p style="margin-left:20px">
+                <a asp-action="AddLeave" asp-route-id="@ViewBag.Userid">Create New</a>
+            </p>
             <div class="table-responsive text-nowrap">
                 <table class="table table-hover">
                     <thead>

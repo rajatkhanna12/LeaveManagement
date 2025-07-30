@@ -29,9 +29,19 @@
                         <td>@item.TotalAllocated</td>
                         <td>@item.Used</td>
                         <td>
-                            <span class="badge @(item.Remaining > 0 ? "bg-label-success" : "bg-label-danger") me-1">
-                                @item.Remaining
-                            </span>
+                            @if (item.Remaining > 0)
+                            {
+                                <span class="badge bg-label-success me-1">
+                                    @item.Remaining
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-label-danger me-1">
+                                    No Paid Leave available
+                                </span>
+                            }
+
                         </td>
                        @*  <td>
                             <div class="dropdown">

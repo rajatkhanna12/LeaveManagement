@@ -54,7 +54,49 @@ namespace LeaveManagement.Controllers
             return View(model);
         }
 
-        
+        [HttpGet]
+        public async  Task<IActionResult> AddLeave(string id)
+        {
+            ViewBag.id = id; 
+            ViewBag.LeaveTypes = await _context.LeaveTypes.ToListAsync();
+            return View();
+        }
+
+        public async Task<IActionResult> ApplyLeave(LeaveRequest model)
+        {
+            var user = await _userManager.GetUserAsync(User);
+
+            if (model.StartDate > model.EndDate)
+            {
+                ModelState.AddModelError("", "Start date must be before end date.");
+            }
+            if (model.StartDate <= DateTime.Today)
+            {
+                ModelState.AddModelError("StartDate", "Start date must be after today.");
+            }
+            if (model.EndDate <= DateTime.Today)
+            {
+                ModelState.AddModelError("EndDate", "End date must be after today.");
+            }
+            
+            model.Status = LeaveStatus.Approved;
+            model.AppliedOn = DateTime.UtcNow;
+
+            if (!ModelState.IsValid)
+            {
+                ViewBag.LeaveTypes = await _context.LeaveTypes.ToListAsync();
+                ViewBag.id = model.UserId;
+                return View("AddLeave", model);
+            }
+
+
+
+            _context.LeaveRequests.Add(model);
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = "Leave request submitted successfully!";
+            return RedirectToAction("AddLeave", new { id = model.UserId });
+        }
         public async Task<IActionResult> Edit(string id)
         {
             var user = await _userManager.FindByIdAsync(id);
@@ -104,15 +146,17 @@ namespace LeaveManagement.Controllers
             var leaveRequests = await _context.LeaveRequests
                 .Include(lr => lr.User)
                 .Include(lr => lr.LeaveType)
+                .OrderByDescending(lr => lr.AppliedOn) 
                 .ToListAsync();
 
             return View(leaveRequests);
         }
         [HttpGet]
-        public async Task<IActionResult> LeaveByUser(string userId)
+        public async Task<IActionResult> LeaveByUser(string id)
         {
+            ViewBag.UserId = id;    
             var leaveRequests = await _context.LeaveRequests
-                .Where(lr => lr.UserId == userId)
+                .Where(lr => lr.UserId == id)
                 .Include(lr => lr.User)
                 .Include(lr => lr.LeaveType)
                 .ToListAsync();
