@@ -68,6 +68,87 @@ namespace LeaveManagement.Controllers
 
             return View(leaves);
         }
+        [HttpGet]
+        public async Task<IActionResult> MyLeaveSummary()
+        {
+            var user = await _userManager.GetUserAsync(User);
+
+            // Get all leave types
+            var leaveTypes = await _context.LeaveTypes.ToListAsync();
+
+            // Get approved leaves of this user
+            var approvedLeaves = await _context.LeaveRequests
+                .Where(l => l.UserId == user.Id && l.Status == LeaveStatus.Approved)
+                .ToListAsync();
+
+            // Project to summary
+            var summary = leaveTypes.Select(type =>
+            {
+                var usedDays = approvedLeaves
+                    .Where(l => l.LeaveTypeId == type.Id)
+                    .Sum(l => (l.EndDate - l.StartDate).Days + 1); // +1 to include end date
+
+                return new LeaveSummaryModel
+                {
+                    LeaveTypeName = type.Name,
+                    TotalAllocated = type.TotalAllowed,
+                    Used = usedDays,
+                    Remaining = type.TotalAllowed - usedDays
+                };
+            }).ToList();
+
+            return View(summary);
+        }
+        public async Task<IActionResult> SalaryDetail()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            var baseSalary = user.BaseSalary;
+
+            var today = DateTime.UtcNow;
+            var year = today.Year;
+            var month = today.Month;
+            var startOfMonth = new DateTime(year, month, 1);
+            var endOfMonth = startOfMonth.AddMonths(1).AddDays(-1);
+            int totalDaysInMonth = DateTime.DaysInMonth(year, month);
+
+          
+            var leaves = await _context.LeaveRequests
+                .Where(l => l.UserId == user.Id &&
+                            l.Status == LeaveStatus.Approved &&
+                            l.EndDate >= startOfMonth &&
+                            l.StartDate <= endOfMonth)
+                .ToListAsync();
+
+            double totalLeaveDays = 0;
+
+            foreach (var leave in leaves)
+            {
+                if (leave.IsHalfDay)
+                {
+                    totalLeaveDays += 0.5;
+                }
+                else
+                {
+                    var leaveStart = leave.StartDate < startOfMonth ? startOfMonth : leave.StartDate;
+                    var leaveEnd = leave.EndDate > endOfMonth ? endOfMonth : leave.EndDate;
+                    totalLeaveDays += (leaveEnd - leaveStart).TotalDays + 1;
+                }
+            }
+
+            decimal perDaySalary = baseSalary / totalDaysInMonth;
+            decimal estimatedSalary = baseSalary - (perDaySalary * (decimal)totalLeaveDays);
+
+            var result = new EstimatedSalaryViewModel
+            {
+                BaseSalary = baseSalary,
+                TotalLeaves = totalLeaveDays,
+                EstimatedSalary = estimatedSalary,
+                PerDaySalary = perDaySalary,
+                TotalDaysInMonth = totalDaysInMonth
+            };
+
+            return View(result);
+        }
 
         //[HttpGet]
         //public async Task<IActionResult> LeaveDetails(int id)

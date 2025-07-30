@@ -17,7 +17,7 @@
                 <th>Half Day</th>
                 <th>Status</th>
                 <th>Applied On</th>
-                <th>Action</th>
+              @*   <th>Action</th> *@
             </tr>
         </thead>
         <tbody>
@@ -38,9 +38,9 @@
                             </span>
                         </td>
                         <td>@leave.AppliedOn.ToShortDateString()</td>
-                        <td>
+                       @*  <td>
                             <a class="btn btn-sm btn-outline-primary" asp-action="LeaveDetails" asp-route-id="@leave.Id">Details</a>
-                        </td>
+                        </td> *@
                     </tr>
                     count++;
                 }
