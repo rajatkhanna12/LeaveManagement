@@ -1,4 +1,4 @@
-﻿@model EstimatedSalaryViewModel
+﻿@model SalaryModel
 @{
     ViewData["Title"] = "Salary Slip";
     Layout = "~/Views/Shared/_EmployeeLayout.cshtml";
@@ -32,7 +32,7 @@
                 </tr>
                 <tr>
                     <th>Leave Deductions</th>
-                    <td>₹@(@Model.PerDaySalary * (decimal)Model.TotalLeaves)</td>
+                    <td>@($"₹{(@Model.PerDaySalary * (decimal)Model.TotalLeaves):N2}")</td>
                 </tr>
                 <tr>
                     <th><strong>Net Estimated Salary</strong></th>

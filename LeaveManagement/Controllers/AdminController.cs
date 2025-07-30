@@ -98,10 +98,21 @@ namespace LeaveManagement.Controllers
             var result = await _userManager.DeleteAsync(user);
             return RedirectToAction("Index");
         }
-
+        [HttpGet]
         public async Task<IActionResult> LeaveRequests()
         {
             var leaveRequests = await _context.LeaveRequests
+                .Include(lr => lr.User)
+                .Include(lr => lr.LeaveType)
+                .ToListAsync();
+
+            return View(leaveRequests);
+        }
+        [HttpGet]
+        public async Task<IActionResult> LeaveByUser(string userId)
+        {
+            var leaveRequests = await _context.LeaveRequests
+                .Where(lr => lr.UserId == userId)
                 .Include(lr => lr.User)
                 .Include(lr => lr.LeaveType)
                 .ToListAsync();

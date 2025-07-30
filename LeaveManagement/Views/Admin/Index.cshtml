@@ -34,7 +34,9 @@
                         <td>@employee.Email</td>
                         <td>@employee.JoiningDate.ToShortDateString()</td>
                         <td>
-                            <span class="badge bg-label-success me-1">Active</span>
+                            <span class="badge bg-label-@(employee.IsActive ? "success" : "danger") me-1">
+                                @(employee.IsActive ? "Active" : "Disabled")
+                            </span>
                         </td>
                         <td>
                             <div class="dropdown">
@@ -47,6 +49,9 @@
                                     </a>
                                     <a class="dropdown-item" href="@Url.Action("Delete", new { id = employee.Id })" onclick="return confirm('Are you sure to delete this user?')">
                                         <i class="bx bx-trash me-1"></i> Delete
+                                    </a>
+                                    <a class="dropdown-item" href="@Url.Action("LeaveByUser", new { userId = employee.Id })">
+                                        <i class="bx bx-trash me-1"></i> Leave Detail
                                     </a>
                                 </div>
                             </div>

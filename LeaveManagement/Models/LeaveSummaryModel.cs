@@ -11,7 +11,7 @@
         
     }
 
-    public class EstimatedSalaryViewModel
+    public class SalaryModel
     {
         public decimal BaseSalary { get; set; }
         public double TotalLeaves { get; set; }

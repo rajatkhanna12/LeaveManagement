@@ -1,4 +1,5 @@
 ﻿using LeaveManagement.Models;
+using LeaveManagement.VM;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -11,11 +12,12 @@ namespace LeaveManagement.Controllers
     {
         private readonly LeaveDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
-
+  
         public EmployeeController(LeaveDbContext context, UserManager<ApplicationUser> userManager)
         {
             _context = context;
             _userManager = userManager;
+        
         }
 
         [HttpGet]
@@ -54,6 +56,37 @@ namespace LeaveManagement.Controllers
             TempData["Success"] = "Leave request submitted successfully!";
             return RedirectToAction("MyLeaves");
         }
+        [HttpGet]
+        public async Task<IActionResult> MyLeaveSummary()
+        {
+            var user = await _userManager.GetUserAsync(User);
+
+           
+            var leaveTypes = await _context.LeaveTypes.ToListAsync();
+
+            
+            var approvedLeaves = await _context.LeaveRequests
+                .Where(l => l.UserId == user.Id && l.Status == LeaveStatus.Approved)
+                .ToListAsync();
+
+           
+            var summary = leaveTypes.Select(type =>
+            {
+                var usedDays = approvedLeaves
+                    .Where(l => l.LeaveTypeId == type.Id)
+                    .Sum(l => (l.EndDate - l.StartDate).Days + 1); 
+
+                return new LeaveSummaryModel
+                {
+                    LeaveTypeName = type.Name,
+                    TotalAllocated = type.TotalAllowed,
+                    Used = usedDays,
+                    Remaining = type.TotalAllowed - usedDays
+                };
+            }).ToList();
+
+            return View(summary);
+        }
 
         [HttpGet]
         public async Task<IActionResult> MyLeaves()
@@ -69,36 +102,14 @@ namespace LeaveManagement.Controllers
             return View(leaves);
         }
         [HttpGet]
-        public async Task<IActionResult> MyLeaveSummary()
-        {
-            var user = await _userManager.GetUserAsync(User);
+        //public async Task<IActionResult> Estimated()
+        //{
+        //    var user = await _userManager.GetUserAsync(User);
+        //    var now = DateTime.Now;
 
-            // Get all leave types
-            var leaveTypes = await _context.LeaveTypes.ToListAsync();
-
-            // Get approved leaves of this user
-            var approvedLeaves = await _context.LeaveRequests
-                .Where(l => l.UserId == user.Id && l.Status == LeaveStatus.Approved)
-                .ToListAsync();
-
-            // Project to summary
-            var summary = leaveTypes.Select(type =>
-            {
-                var usedDays = approvedLeaves
-                    .Where(l => l.LeaveTypeId == type.Id)
-                    .Sum(l => (l.EndDate - l.StartDate).Days + 1); // +1 to include end date
-
-                return new LeaveSummaryModel
-                {
-                    LeaveTypeName = type.Name,
-                    TotalAllocated = type.TotalAllowed,
-                    Used = usedDays,
-                    Remaining = type.TotalAllowed - usedDays
-                };
-            }).ToList();
-
-            return View(summary);
-        }
+        //    var model = await _salaryService.GetEstimatedSalaryDetailsAsync(user.Id, now.Year, now.Month);
+        //    return View(model); 
+        //}
         public async Task<IActionResult> SalaryDetail()
         {
             var user = await _userManager.GetUserAsync(User);
@@ -111,7 +122,7 @@ namespace LeaveManagement.Controllers
             var endOfMonth = startOfMonth.AddMonths(1).AddDays(-1);
             int totalDaysInMonth = DateTime.DaysInMonth(year, month);
 
-          
+            // Get all approved leaves overlapping with current month
             var leaves = await _context.LeaveRequests
                 .Where(l => l.UserId == user.Id &&
                             l.Status == LeaveStatus.Approved &&
@@ -138,7 +149,7 @@ namespace LeaveManagement.Controllers
             decimal perDaySalary = baseSalary / totalDaysInMonth;
             decimal estimatedSalary = baseSalary - (perDaySalary * (decimal)totalLeaveDays);
 
-            var result = new EstimatedSalaryViewModel
+            var result = new SalaryModel
             {
                 BaseSalary = baseSalary,
                 TotalLeaves = totalLeaveDays,
