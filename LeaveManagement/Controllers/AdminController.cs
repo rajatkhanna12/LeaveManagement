@@ -30,7 +30,90 @@ namespace LeaveManagement.Controllers
             return View();
         }
 
-       
+
+
+        [HttpGet]
+        public async Task<IActionResult> SalaryDetail(string id)
+        {
+            var user = await _userManager.FindByIdAsync(id);
+            var baseSalary = user.BaseSalary;
+
+            var today = DateTime.UtcNow;
+            var year = today.Year;
+            var month = today.Month;
+            int totalDaysInMonth = DateTime.DaysInMonth(year, month);
+
+            var startOfMonth = new DateTime(year, month, 1);
+            var endOfMonth = startOfMonth.AddMonths(1).AddDays(-1);
+
+            // Total allowed paid leaves till now (1 per month)
+            int allowedLeavesTillNow = month;
+
+            // Get all approved leaves from Jan 1 to today
+            var allLeaves = await _context.LeaveRequests
+                .Where(l => l.UserId == user.Id &&
+                            l.Status == LeaveStatus.Approved &&
+                            l.EndDate >= new DateTime(year, 1, 1) &&
+                            l.StartDate <= today)
+                .ToListAsync();
+
+            // Get only current month's approved leaves
+            var currentMonthLeaves = allLeaves
+                .Where(l => l.EndDate >= startOfMonth && l.StartDate <= endOfMonth)
+                .ToList();
+
+            double totalLeaveDays = 0;
+            double thisMonthLeaveDays = 0;
+
+            // Count full year leave days
+            foreach (var leave in allLeaves)
+            {
+                var leaveStart = leave.StartDate < new DateTime(year, 1, 1) ? new DateTime(year, 1, 1) : leave.StartDate;
+                var leaveEnd = leave.EndDate > today ? today : leave.EndDate;
+                double days = (leaveEnd - leaveStart).TotalDays + 1;
+
+                totalLeaveDays += leave.IsHalfDay ? days * 0.5 : days;
+            }
+
+            // Count current month leave days
+            foreach (var leave in currentMonthLeaves)
+            {
+                var leaveStart = leave.StartDate < startOfMonth ? startOfMonth : leave.StartDate;
+                var leaveEnd = leave.EndDate > endOfMonth ? endOfMonth : leave.EndDate;
+                double days = (leaveEnd - leaveStart).TotalDays + 1;
+
+                thisMonthLeaveDays += leave.IsHalfDay ? days * 0.5 : days;
+            }
+
+            // Logic for deductions
+            double extraLeaveDaysTotal = totalLeaveDays - allowedLeavesTillNow;
+            if (extraLeaveDaysTotal < 0) extraLeaveDaysTotal = 0;
+
+            double allowedLeavesThisMonth = 1; // Assuming 1 per month
+            double extraLeaveThisMonth = thisMonthLeaveDays - allowedLeavesThisMonth;
+            if (extraLeaveThisMonth < 0) extraLeaveThisMonth = 0;
+
+            double paidLeavesThisMonth = thisMonthLeaveDays - extraLeaveThisMonth;
+
+            decimal perDaySalary = baseSalary / totalDaysInMonth;
+            decimal estimatedSalary = baseSalary - (perDaySalary * (decimal)extraLeaveDaysTotal);
+
+            var result = new SalaryModel
+            {
+                BaseSalary = baseSalary,
+                TotalLeaves = totalLeaveDays,
+                LeavesTakenThisMonth = thisMonthLeaveDays,
+                PaidLeavesThisMonth = paidLeavesThisMonth,
+                ExtraLeaveDays = extraLeaveDaysTotal,
+                ExtraLeaveDaysThisMonth = extraLeaveThisMonth,
+                EstimatedSalary = estimatedSalary,
+                PerDaySalary = perDaySalary,
+                TotalDaysInMonth = totalDaysInMonth
+            };
+
+            return View(result);
+        }
+
         [HttpPost]
         public async Task<IActionResult> Create(ApplicationUser model, decimal baseSalary)
         {
@@ -55,48 +138,48 @@ namespace LeaveManagement.Controllers
         }
 
         [HttpGet]
-        public async  Task<IActionResult> AddLeave(string id)
+       
+        public async Task<IActionResult> AddLeave()
         {
-            ViewBag.id = id; 
+            var employeeRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "Employee");
+
+            // Fetch all users in the 'Employee' role
+            var employees = await (from user in _context.Users
+                                   join userRole in _context.UserRoles on user.Id equals userRole.UserId
+                                   where userRole.RoleId == employeeRole.Id
+                                   select user).ToListAsync();
+
+            ViewBag.Employees = employees;
             ViewBag.LeaveTypes = await _context.LeaveTypes.ToListAsync();
+
             return View();
         }
-
+        [HttpPost]
         public async Task<IActionResult> ApplyLeave(LeaveRequest model)
         {
-            var user = await _userManager.GetUserAsync(User);
-
-            if (model.StartDate > model.EndDate)
-            {
-                ModelState.AddModelError("", "Start date must be before end date.");
-            }
-            if (model.StartDate <= DateTime.Today)
-            {
-                ModelState.AddModelError("StartDate", "Start date must be after today.");
-            }
-            if (model.EndDate <= DateTime.Today)
-            {
-                ModelState.AddModelError("EndDate", "End date must be after today.");
-            }
-            
             model.Status = LeaveStatus.Approved;
             model.AppliedOn = DateTime.UtcNow;
 
             if (!ModelState.IsValid)
             {
+                var employeeRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "Employee");
+                var employees = await (from user in _context.Users
+                                       join userRole in _context.UserRoles on user.Id equals userRole.UserId
+                                       where userRole.RoleId == employeeRole.Id
+                                       select user).ToListAsync();
+
+                ViewBag.Employees = employees;
                 ViewBag.LeaveTypes = await _context.LeaveTypes.ToListAsync();
-                ViewBag.id = model.UserId;
                 return View("AddLeave", model);
             }
-
-
 
             _context.LeaveRequests.Add(model);
             await _context.SaveChangesAsync();
 
             TempData["Success"] = "Leave request submitted successfully!";
-            return RedirectToAction("AddLeave", new { id = model.UserId });
+            return RedirectToAction("AddLeave");
         }
+
         public async Task<IActionResult> Edit(string id)
         {
             var user = await _userManager.FindByIdAsync(id);
@@ -141,16 +224,44 @@ namespace LeaveManagement.Controllers
             return RedirectToAction("Index");
         }
         [HttpGet]
-        public async Task<IActionResult> LeaveRequests()
+        public async Task<IActionResult> ApprovedLeaves()
         {
-            var leaveRequests = await _context.LeaveRequests
+            var leaves = await _context.LeaveRequests
                 .Include(lr => lr.User)
                 .Include(lr => lr.LeaveType)
-                .OrderByDescending(lr => lr.AppliedOn) 
+                .Where(lr => lr.Status == LeaveStatus.Approved)
+                .OrderByDescending(lr => lr.AppliedOn)
                 .ToListAsync();
 
-            return View(leaveRequests);
+            return View( leaves); 
         }
+
+        [HttpGet]
+        public async Task<IActionResult> RejectedLeaves()
+        {
+            var leaves = await _context.LeaveRequests
+                .Include(lr => lr.User)
+                .Include(lr => lr.LeaveType)
+                .Where(lr => lr.Status == LeaveStatus.Rejected)
+                .OrderByDescending(lr => lr.AppliedOn)
+                .ToListAsync();
+
+            return View( leaves);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> PendingLeaves()
+        {
+            var leaves = await _context.LeaveRequests
+                .Include(lr => lr.User)
+                .Include(lr => lr.LeaveType)
+                .Where(lr => lr.Status == LeaveStatus.Pending)
+                .OrderByDescending(lr => lr.AppliedOn)
+                .ToListAsync();
+
+            return View(leaves);
+        }
+
         [HttpGet]
         public async Task<IActionResult> LeaveByUser(string id)
         {
@@ -177,15 +288,20 @@ namespace LeaveManagement.Controllers
         }
 
         [HttpPost]
+  
         public async Task<IActionResult> UpdateLeaveStatus(LeaveRequest model)
         {
             var request = await _context.LeaveRequests.FindAsync(model.Id);
             if (request == null) return NotFound();
 
-            request.Status = model.Status;
-            await _context.SaveChangesAsync();
+            // Only update if the current status is Pending
+            if (request.Status == LeaveStatus.Pending)
+            {
+                request.Status = model.Status;
+                await _context.SaveChangesAsync();
+            }
 
-            return RedirectToAction("LeaveRequests");
+            return RedirectToAction("Index");
         }
 
     }

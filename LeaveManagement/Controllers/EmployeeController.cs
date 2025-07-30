@@ -137,6 +137,7 @@ namespace LeaveManagement.Controllers
         //    var model = await _salaryService.GetEstimatedSalaryDetailsAsync(user.Id, now.Year, now.Month);
         //    return View(model); 
         //}
+        [HttpGet]
         public async Task<IActionResult> SalaryDetail()
         {
             var user = await _userManager.GetUserAsync(User);
@@ -150,10 +151,10 @@ namespace LeaveManagement.Controllers
             var startOfMonth = new DateTime(year, month, 1);
             var endOfMonth = startOfMonth.AddMonths(1).AddDays(-1);
 
-            // Total allowed paid leaves till now (1 per month)
+            
             int allowedLeavesTillNow = month;
 
-            // Get all approved leaves from Jan 1 to today
+           
             var allLeaves = await _context.LeaveRequests
                 .Where(l => l.UserId == user.Id &&
                             l.Status == LeaveStatus.Approved &&
@@ -161,7 +162,7 @@ namespace LeaveManagement.Controllers
                             l.StartDate <= today)
                 .ToListAsync();
 
-            // Get only current month's approved leaves
+           
             var currentMonthLeaves = allLeaves
                 .Where(l => l.EndDate >= startOfMonth && l.StartDate <= endOfMonth)
                 .ToList();
@@ -169,7 +170,6 @@ namespace LeaveManagement.Controllers
             double totalLeaveDays = 0;
             double thisMonthLeaveDays = 0;
 
-            // Count full year leave days
             foreach (var leave in allLeaves)
             {
                 var leaveStart = leave.StartDate < new DateTime(year, 1, 1) ? new DateTime(year, 1, 1) : leave.StartDate;
@@ -188,7 +188,7 @@ namespace LeaveManagement.Controllers
 
                 thisMonthLeaveDays += leave.IsHalfDay ? days * 0.5 : days;
             }
-
+            
             // Logic for deductions
             double extraLeaveDaysTotal = totalLeaveDays - allowedLeavesTillNow;
             if (extraLeaveDaysTotal < 0) extraLeaveDaysTotal = 0;
