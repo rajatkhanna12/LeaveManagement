@@ -1,0 +1,24 @@
+﻿@model LeaveManagement.VM.EstimatedSalaryViewModel
+@{
+    ViewData["Title"] = "Current Month Salary Details";
+}
+
+<h2>Salary Details - @System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(Model.Month) @Model.Year</h2>
+
+<table class="table table-bordered">
+    <tr><th>Full Name</th><td>@Model.FullName</td></tr>
+    <tr><th>Role</th><td>@Model.Role</td></tr>
+    <tr><th>Joining Date</th><td>@Model.JoiningDate.ToShortDateString()</td></tr>
+    <tr><th>Base Salary</th><td>@Model.BaseSalary.ToString("C")</td></tr>
+    <tr><th>Unpaid Leave Days</th><td>@Model.UnpaidLeaveDays</td></tr>
+    <tr><th>Holiday Dates</th>
+        <td>
+            @foreach (var date in Model.Holidays)
+            {
+                <span class="badge bg-info text-dark">@date.ToShortDateString()</span>
+            }
+        </td>
+    </tr>
+    <tr><th>Deduction Due to Leaves</th><td class="text-danger">-@Model.Deduction.ToString("C")</td></tr>
+    <tr><th>Estimated Salary</th><td class="text-success"><strong>@Model.EstimatedSalary.ToString("C")</strong></td></tr>
+</table>
