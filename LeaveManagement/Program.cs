@@ -1,5 +1,6 @@
 using LeaveManagement.Models;
 using LeaveManagement.SeedData;
+using LeaveManagement.VM;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -16,7 +17,7 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 })
 .AddEntityFrameworkStores<LeaveDbContext>()
 .AddDefaultTokenProviders();
-
+builder.Services.AddSingleton<SalaryViewModel>();
 var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {

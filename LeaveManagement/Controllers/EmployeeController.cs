@@ -1,4 +1,5 @@
 ﻿using LeaveManagement.Models;
+using LeaveManagement.VM;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -11,11 +12,12 @@ namespace LeaveManagement.Controllers
     {
         private readonly LeaveDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
-
-        public EmployeeController(LeaveDbContext context, UserManager<ApplicationUser> userManager)
+        private readonly SalaryViewModel _salaryService;
+        public EmployeeController(LeaveDbContext context, UserManager<ApplicationUser> userManager, SalaryViewModel salaryService)
         {
             _context = context;
             _userManager = userManager;
+            _salaryService = salaryService;
         }
 
         [HttpGet]
@@ -67,6 +69,15 @@ namespace LeaveManagement.Controllers
                 .ToListAsync();
 
             return View(leaves);
+        }
+        [HttpGet]
+        public async Task<IActionResult> Estimated()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            var now = DateTime.Now;
+
+            var model = await _salaryService.GetEstimatedSalaryDetailsAsync(user.Id, now.Year, now.Month);
+            return View(model); 
         }
 
         //[HttpGet]
