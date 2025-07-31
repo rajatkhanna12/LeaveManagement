@@ -103,7 +103,7 @@ namespace LeaveManagement.Controllers
     {
         new LeaveSummaryModel
         {
-            LeaveTypeName = "Casual Leave",
+            LeaveTypeName = "Monthly Leave",
             TotalAllocated = currentMonth,
             Used = (int)totalLeaveDays,
             Remaining = (int)(currentMonth - totalLeaveDays)
