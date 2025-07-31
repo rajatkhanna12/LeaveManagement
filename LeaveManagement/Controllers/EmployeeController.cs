@@ -115,10 +115,10 @@ namespace LeaveManagement.Controllers
     {
         new LeaveSummaryModel
         {
-            LeaveTypeName = "Paid Leave",
-            TotalAllocated = allocatedPaidLeaves,
-            Used = usedLeaves,
-            Remaining = remainingPaid > 0 ? remainingPaid : 0
+            LeaveTypeName = "Monthly Leave",
+            TotalAllocated = currentMonth,
+            Used = (int)totalLeaveDays,
+            Remaining = (int)(currentMonth - totalLeaveDays)
         }
     };
 
