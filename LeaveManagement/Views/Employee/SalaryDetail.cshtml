@@ -1,64 +1,80 @@
-﻿@model SalaryModel
+﻿@model SalaryReport
+
 @{
     ViewData["Title"] = "Salary Slip";
     Layout = "~/Views/Shared/_EmployeeLayout.cshtml";
-    var monthName = System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(DateTime.UtcNow.Month);
+    var monthName = Model != null
+        ? System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(Model.Month)
+        : System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(DateTime.UtcNow.Month);
 }
-
-
 
 <div class="card border mb-4">
     <div class="card-header text-center">
         <h4 class="mb-0">Salary Slip</h4>
-        <small>For the month of <strong>@monthName @DateTime.UtcNow.Year</strong></small>
+        <small>
+            For the month of <strong>@monthName @(Model?.Year ?? DateTime.UtcNow.Year)</strong>
+        </small>
     </div>
 
     <div class="card-body">
-        <table class="table table-bordered">
-            <tbody>
-                <tr>
-                    <th style="width: 50%;">Base Salary</th>
-                    <td>₹@Model.BaseSalary.ToString("N2")</td>
-                </tr>
-                <tr>
-                    <th>Total Days in Month</th>
-                    <td>@Model.TotalDaysInMonth</td>
-                </tr>
-                <tr>
-                    <th>Per Day Salary</th>
-                    <td>₹@Model.PerDaySalary.ToString("N2")</td>
-                </tr>
-               
-                <tr>
-                    <th>Leaves Taken This Month</th>
-                    <td>@Model.LeavesTakenThisMonth</td>
-                </tr>
-               
-                <tr>
-                    <th>Leave Deductions (This Year)</th>
-                    <td>
-                        @if (Model.ExtraLeaveDays > 0)
-                        {
-                            @($"₹{(Model.PerDaySalary * (decimal)Model.ExtraLeaveDays):N2}")
-                        }
-                        else
-                        {
-                            <span class="text-success">No deductions</span>
-                        }
-                    </td>
-                </tr>
-                <tr>
-                    <th><strong>Net Estimated Salary</strong></th>
-                    <td><strong>₹@Model.EstimatedSalary.ToString("N2")</strong></td>
-                </tr>
-            </tbody>
-        </table>
-
-       @*  <div class="text-end mt-3">
-            <button onclick="window.print()" class="btn btn-primary">
-                <i class="bx bx-printer me-1"></i> Print
-            </button>
-        </div> *@
+        @if (Model == null)
+        {
+            <div class="alert alert-warning text-center">
+                No salary report available for the selected user.
+            </div>
+        }
+        else
+        {
+            <table class="table table-bordered">
+                <tbody>
+                    <tr>
+                        <th style="width: 50%;">Employee Name</th>
+                        <td>@Model.User?.UserName </td>
+                    </tr>
+                    <tr>
+                        <th>Total Working Days</th>
+                        <td>@Model.TotalWorkingDays</td>
+                    </tr>
+                    <tr>
+                        <th>Leaves Taken This Month</th>
+                        <td>@Model.LeaveTakenThisMonth</td>
+                    </tr>
+                    <tr>
+                        <th>Base Salary</th>
+                        <td>₹@Model.BaseSalary.ToString("N2")</td>
+                    </tr>
+                    <tr>
+                        <th>Deductions</th>
+                        <td>
+                            @if (Model.Deductions > 0)
+                            {
+                                @($"₹{Model.Deductions:N2}")
+                            }
+                            else
+                            {
+                                <span class="text-success">No deductions</span>
+                            }
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Bonuses</th>
+                        <td>
+                            @if (Model.Bonuses > 0)
+                            {
+                                @($"₹{Model.Bonuses:N2}")
+                            }
+                            else
+                            {
+                                <span class="text-muted">No bonuses</span>
+                            }
+                        </td>
+                    </tr>
+                    <tr>
+                        <th><strong>Final Salary</strong></th>
+                        <td><strong>₹@Model.FinalSalary.ToString("N2")</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+        }
     </div>
 </div>
-

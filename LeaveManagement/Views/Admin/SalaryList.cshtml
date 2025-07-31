@@ -1,0 +1,40 @@
+﻿@model List<LeaveManagement.Models.SalaryReport>
+@{
+    Layout = "_ManagerLayout";
+}
+<div class="card">
+    <h5 class="card-header">Previous Salary Reports</h5>
+    <div class="table-responsive text-nowrap">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                     <th> Name</th>
+                    <th>Month</th>
+                    <th>Year</th>
+                    <th>Base Salary</th>
+                    <th>Deductions</th>
+                    <th>LeaveTaken</th>
+                    <th>Final Salary</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody class="table-border-bottom-0">
+                @foreach (var report in Model)
+                {
+                    <tr>
+                        <td> @report.User?.UserName</td>
+                        <td>@System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(report.Month)</td>
+                        <td>@report.Year</td>
+                        <td>₹ @report.BaseSalary.ToString("N2")</td>
+                        <td>- ₹ @report.Deductions.ToString("N2")</td>
+                        <td> @report.LeaveTakenThisMonth.ToString("N2")</td>
+                        <td><strong>₹ @report.FinalSalary.ToString("N2")</strong></td>
+                        <td>
+                            <a asp-action="SalaryApprove" asp-route-id="@report.Id" class="btn btn-sm btn-outline-secondary">Approve</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

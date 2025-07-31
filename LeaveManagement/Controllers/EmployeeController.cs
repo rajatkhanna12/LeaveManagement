@@ -32,7 +32,7 @@ namespace LeaveManagement.Controllers
         public async Task<IActionResult> ApplyLeave(LeaveRequest model)
         {
             var user = await _userManager.GetUserAsync(User);
-        
+
             if (model.StartDate > model.EndDate)
             {
                 ModelState.AddModelError("", "Start date must be before end date.");
@@ -45,9 +45,21 @@ namespace LeaveManagement.Controllers
             {
                 ModelState.AddModelError("EndDate", "End date must be after today.");
             }
+
             model.UserId = user.Id;
             model.Status = LeaveStatus.Pending;
             model.AppliedOn = DateTime.UtcNow;
+
+           
+            bool alreadyExists = await _context.LeaveRequests.AnyAsync(l =>
+                l.UserId == user.Id &&
+                l.StartDate == model.StartDate &&
+                l.EndDate == model.EndDate);
+
+            if (alreadyExists)
+            {
+                ModelState.AddModelError("", "A leave request already exists for the selected start and end date.");
+            }
 
             if (!ModelState.IsValid)
             {
@@ -55,15 +67,13 @@ namespace LeaveManagement.Controllers
                 return View(model);
             }
 
-           
-
             _context.LeaveRequests.Add(model);
             await _context.SaveChangesAsync();
 
             TempData["Success"] = "Leave request submitted successfully!";
             return RedirectToAction("MyLeaves");
         }
-        
+
         [HttpGet]
         public async Task<IActionResult> MyLeaveSummary()
         {
@@ -74,7 +84,6 @@ namespace LeaveManagement.Controllers
             var startOfYear = new DateTime(today.Year, 1, 1);
             var endOfToday = today;
 
-            // Get all approved leaves from start of year till now
             var approvedLeaves = await _context.LeaveRequests
                 .Where(l => l.UserId == user.Id &&
                             l.Status == LeaveStatus.Approved &&
@@ -82,36 +91,40 @@ namespace LeaveManagement.Controllers
                             l.StartDate <= endOfToday)
                 .ToListAsync();
 
-
-
-            double totalLeaveDays=0 ;
-            var startOfMonth = new DateTime(today.Year, today.Month, 1);
-            var endOfMonth = startOfMonth.AddMonths(1).AddDays(-1);
+            double totalLeaveDays = 0;
 
             foreach (var leave in approvedLeaves)
             {
-                var leaveStart = leave.StartDate < startOfMonth ? startOfMonth : leave.StartDate;
-                var leaveEnd = leave.EndDate > endOfMonth ? endOfMonth : leave.EndDate;
+                var leaveStart = leave.StartDate < startOfYear ? startOfYear : leave.StartDate;
+                var leaveEnd = leave.EndDate > endOfToday ? endOfToday : leave.EndDate;
 
-                double days = (leaveEnd - leaveStart).TotalDays + 1;
-
-                totalLeaveDays += leave.IsHalfDay ? days * 0.5 : days;
+                for (var dt = leaveStart; dt <= leaveEnd; dt = dt.AddDays(1))
+                {
+                    if (dt.Year == today.Year)
+                    {
+                        totalLeaveDays += leave.IsHalfDay ? 0.5 : 1;
+                    }
+                }
             }
 
+            int allocatedPaidLeaves = currentMonth;
+            int usedLeaves = (int)Math.Floor(totalLeaveDays);
+            int remainingPaid = allocatedPaidLeaves - usedLeaves;
 
             var summary = new List<LeaveSummaryModel>
     {
         new LeaveSummaryModel
         {
-            LeaveTypeName = "Casual Leave",
-            TotalAllocated = currentMonth,
-            Used = (int)totalLeaveDays,
-            Remaining = (int)(currentMonth - totalLeaveDays)
+            LeaveTypeName = "Paid Leave",
+            TotalAllocated = allocatedPaidLeaves,
+            Used = usedLeaves,
+            Remaining = remainingPaid > 0 ? remainingPaid : 0
         }
     };
 
             return View(summary);
         }
+
 
 
 
@@ -141,96 +154,34 @@ namespace LeaveManagement.Controllers
         public async Task<IActionResult> SalaryDetail()
         {
             var user = await _userManager.GetUserAsync(User);
-            var baseSalary = user.BaseSalary;
+            var today = DateTime.Now;
+            var currentMonth = today.Month;
+            var currentYear = today.Year;
 
-            var today = DateTime.UtcNow;
-            var year = today.Year;
-            var month = today.Month;
-            int totalDaysInMonth = DateTime.DaysInMonth(year, month);
+            var previousDate = today.AddMonths(-1);
+            var prevMonth = previousDate.Month;
+            var prevYear = previousDate.Year;
 
-            var startOfMonth = new DateTime(year, month, 1);
-            var endOfMonth = startOfMonth.AddMonths(1).AddDays(-1);
+            var prevUnpaid = await _context.SalaryReports
+                .Include(r => r.User)
+                .Where(r => r.UserId == user.Id.ToString() && !r.IsPaid &&
+                            r.Month == prevMonth && r.Year == prevYear)
+                .FirstOrDefaultAsync();
 
-            
-            int allowedLeavesTillNow = month;
+            if (prevUnpaid != null)
+                return View(prevUnpaid);
 
-           
-            var allLeaves = await _context.LeaveRequests
-                .Where(l => l.UserId == user.Id &&
-                            l.Status == LeaveStatus.Approved &&
-                            l.EndDate >= new DateTime(year, 1, 1) &&
-                            l.StartDate <= today)
-                .ToListAsync();
+            var currentUnpaid = await _context.SalaryReports
+                .Include(r => r.User)
+                .Where(r => r.UserId == user.Id.ToString() && !r.IsPaid &&
+                            r.Month == currentMonth && r.Year == currentYear)
+                .FirstOrDefaultAsync();
 
-           
-            var currentMonthLeaves = allLeaves
-                .Where(l => l.EndDate >= startOfMonth && l.StartDate <= endOfMonth)
-                .ToList();
+            if (currentUnpaid != null)
+                return View(currentUnpaid);
 
-            double totalLeaveDays = 0;
-            double thisMonthLeaveDays = 0;
-
-            foreach (var leave in allLeaves)
-            {
-                var leaveStart = leave.StartDate < new DateTime(year, 1, 1) ? new DateTime(year, 1, 1) : leave.StartDate;
-                var leaveEnd = leave.EndDate > today ? today : leave.EndDate;
-                double days = (leaveEnd - leaveStart).TotalDays + 1;
-
-                totalLeaveDays += leave.IsHalfDay ? days * 0.5 : days;
-            }
-
-            // Count current month leave days
-            foreach (var leave in currentMonthLeaves)
-            {
-                var leaveStart = leave.StartDate < startOfMonth ? startOfMonth : leave.StartDate;
-                var leaveEnd = leave.EndDate > endOfMonth ? endOfMonth : leave.EndDate;
-                double days = (leaveEnd - leaveStart).TotalDays + 1;
-
-                thisMonthLeaveDays += leave.IsHalfDay ? days * 0.5 : days;
-            }
-            
-            // Logic for deductions
-            double extraLeaveDaysTotal = totalLeaveDays - allowedLeavesTillNow;
-            if (extraLeaveDaysTotal < 0) extraLeaveDaysTotal = 0;
-
-            double allowedLeavesThisMonth = 1; // Assuming 1 per month
-            double extraLeaveThisMonth = thisMonthLeaveDays - allowedLeavesThisMonth;
-            if (extraLeaveThisMonth < 0) extraLeaveThisMonth = 0;
-
-            double paidLeavesThisMonth = thisMonthLeaveDays - extraLeaveThisMonth;
-
-            decimal perDaySalary = baseSalary / totalDaysInMonth;
-            decimal estimatedSalary = baseSalary - (perDaySalary * (decimal)extraLeaveDaysTotal);
-
-            var result = new SalaryModel
-            {
-                BaseSalary = baseSalary,
-                TotalLeaves = totalLeaveDays,
-                LeavesTakenThisMonth = thisMonthLeaveDays,
-                PaidLeavesThisMonth = paidLeavesThisMonth,
-                ExtraLeaveDays = extraLeaveDaysTotal,
-                ExtraLeaveDaysThisMonth = extraLeaveThisMonth,
-                EstimatedSalary = estimatedSalary,
-                PerDaySalary = perDaySalary,
-                TotalDaysInMonth = totalDaysInMonth
-            };
-
-            return View(result);
+            return View(null);
         }
 
-        //[HttpGet]
-        //public async Task<IActionResult> LeaveDetails(int id)
-        //{
-        //    var user = await _userManager.GetUserAsync(User);
-
-        //    var leave = await _context.LeaveRequests
-        //        .Include(l => l.LeaveType)
-        //        .FirstOrDefaultAsync(l => l.Id == id && l.UserId == user.Id);
-
-        //    if (leave == null)
-        //        return NotFound();
-
-        //    return View(leave);
-        //}
     }
 }

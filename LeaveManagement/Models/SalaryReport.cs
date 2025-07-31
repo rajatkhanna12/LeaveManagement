@@ -10,17 +10,23 @@
         public int Id { get; set; }
 
         public string UserId { get; set; }
+
+        [ForeignKey("UserId")]
         public ApplicationUser User { get; set; }
 
         public int Year { get; set; }
         public int Month { get; set; }
+        public int TotalWorkingDays { get; set; }
 
-        // Encrypted fields
+        
         public string BaseSalaryEncrypted { get; set; } = "";
         public string DeductionsEncrypted { get; set; } = "";
         public string BonusesEncrypted { get; set; } = "";
 
-        // Exposed properties
+        public float LeaveTakenThisMonth { get; set; } = 0;
+        public bool IsPaid { get; set; }
+
+       
         [NotMapped]
         public decimal BaseSalary
         {

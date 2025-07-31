@@ -12,5 +12,6 @@ namespace LeaveManagement.Models
         public DbSet<LeaveRequest> LeaveRequests { get; set; }
         public DbSet<LeaveType> LeaveTypes { get; set; }
         public DbSet<SalaryReport> SalaryReports { get; set; }
+       
     }
 }
