@@ -17,6 +17,7 @@
     </div>
 
     <div class="card-body">
+        
         @if (Model == null)
         {
             <div class="alert alert-warning text-center">
@@ -77,4 +78,13 @@
             </table>
         }
     </div>
+    @if (Model != null && ViewBag.IsPdf != true)
+    {
+        <div class="text-end mb-3">
+            <a asp-action="DownloadSalarySlipPdf" asp-route-id="@Model.Id" class="btn btn-success">
+                <i class="fa fa-file-pdf-o"></i> Download PDF
+            </a>
+        </div>
+    }
+
 </div>
