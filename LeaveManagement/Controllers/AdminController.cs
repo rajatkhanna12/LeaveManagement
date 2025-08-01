@@ -17,21 +17,44 @@ namespace LeaveManagement.Controllers
             _context = context;
             _userManager = userManager;
         }
+        // Logged In user
+        private async Task SetUserInfoAsync()
+        {
+            if (User?.Identity != null && User.Identity.IsAuthenticated)
+            {
+                var user = await _userManager.GetUserAsync(User);
+                if (user != null)
+                {
+                    ViewBag.UserName = !string.IsNullOrEmpty(user.FullName) ? user.FullName : user.UserName;
+
+                    var roles = await _userManager.GetRolesAsync(user);
+                    ViewBag.UserRole = roles?.FirstOrDefault() ?? "Employee";
+                    return;
+                }
+            }
+
+            // Default values (for safety)
+            ViewBag.UserName = "Guest";
+            ViewBag.UserRole = "Unknown";
+        }
 
         public async Task<IActionResult> Index()
         {
+            await SetUserInfoAsync();
             var employees = await _userManager.GetUsersInRoleAsync("Employee");
             return View(employees.AsEnumerable());
         }
 
 
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
+             await SetUserInfoAsync();
             return View();
         }
 
         public async Task<IActionResult> SalaryList()
         {
+            await SetUserInfoAsync();
             await GenerateCurrentMonthSalaryReports();
             var today = DateTime.Now;
             var month = today.Month;
@@ -45,6 +68,7 @@ namespace LeaveManagement.Controllers
 
         public async Task<IActionResult> SalaryApprove(int Id)
         {
+            await SetUserInfoAsync();
             if (Id != null)
             {
                 var data = await _context.SalaryReports.FindAsync(Id);
@@ -64,6 +88,7 @@ namespace LeaveManagement.Controllers
         [HttpGet]
         public async Task<IActionResult> SalaryDetail(string id)
         {
+            await SetUserInfoAsync();
             var today = DateTime.Now;
             var currentMonth = today.Month;
             var currentYear = today.Year;
@@ -96,6 +121,7 @@ namespace LeaveManagement.Controllers
         [HttpPost]
         public async Task<IActionResult> Create(ApplicationUser model, decimal baseSalary)
         {
+            await SetUserInfoAsync();
             if (ModelState.IsValid)
             {
                 model.BaseSalary = baseSalary;
@@ -120,6 +146,7 @@ namespace LeaveManagement.Controllers
        
         public async Task<IActionResult> AddLeave()
         {
+            await SetUserInfoAsync();
             var employeeRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "Employee");
 
            
@@ -136,6 +163,7 @@ namespace LeaveManagement.Controllers
         [HttpPost]
         public async Task<IActionResult> ApplyLeave(LeaveRequest model)
         {
+            await SetUserInfoAsync();
             model.Status = LeaveStatus.Approved;
             model.AppliedOn = DateTime.UtcNow;
 
@@ -182,6 +210,7 @@ namespace LeaveManagement.Controllers
 
         public async Task<IActionResult> Edit(string id)
         {
+            await SetUserInfoAsync();
             var user = await _userManager.FindByIdAsync(id);
             if (user == null) return NotFound();
 
@@ -192,6 +221,7 @@ namespace LeaveManagement.Controllers
         [HttpPost]
         public async Task<IActionResult> Edit(ApplicationUser model, decimal baseSalary)
         {
+            await SetUserInfoAsync();
             var user = await _userManager.FindByIdAsync(model.Id);
             if (user == null) return NotFound();
 
@@ -217,6 +247,7 @@ namespace LeaveManagement.Controllers
        
         public async Task<IActionResult> Delete(string id)
         {
+            await SetUserInfoAsync();
             var user = await _userManager.FindByIdAsync(id);
             if (user == null) return NotFound();
 
@@ -226,6 +257,7 @@ namespace LeaveManagement.Controllers
         [HttpGet]
         public async Task<IActionResult> ApprovedLeaves()
         {
+            await SetUserInfoAsync();
             var leaves = await _context.LeaveRequests
                 .Include(lr => lr.User)
                 .Include(lr => lr.LeaveType)
@@ -239,6 +271,7 @@ namespace LeaveManagement.Controllers
         [HttpGet]
         public async Task<IActionResult> RejectedLeaves()
         {
+            await SetUserInfoAsync();
             var leaves = await _context.LeaveRequests
                 .Include(lr => lr.User)
                 .Include(lr => lr.LeaveType)
@@ -252,6 +285,7 @@ namespace LeaveManagement.Controllers
         [HttpGet]
         public async Task<IActionResult> PendingLeaves()
         {
+            await SetUserInfoAsync();
             var leaves = await _context.LeaveRequests
                 .Include(lr => lr.User)
                 .Include(lr => lr.LeaveType)
@@ -265,6 +299,7 @@ namespace LeaveManagement.Controllers
         [HttpGet]
         public async Task<IActionResult> LeaveByUser(string id)
         {
+            await SetUserInfoAsync();
             ViewBag.UserId = id;    
             var leaveRequests = await _context.LeaveRequests
                 .Where(lr => lr.UserId == id)
@@ -278,6 +313,7 @@ namespace LeaveManagement.Controllers
         [HttpGet]
         public async Task<IActionResult> UpdateLeaveStatus(int id)
         {
+            await SetUserInfoAsync();
             var request = await _context.LeaveRequests
                 .Include(r => r.User)
                 .Include(r => r.LeaveType)
@@ -407,6 +443,7 @@ namespace LeaveManagement.Controllers
   
         public async Task<IActionResult> UpdateLeaveStatus(LeaveRequest model)
         {
+            await SetUserInfoAsync();
             var request = await _context.LeaveRequests.FindAsync(model.Id);
             if (request == null) return NotFound();
 
@@ -512,6 +549,7 @@ namespace LeaveManagement.Controllers
 
         private async Task GenerateCurrentMonthSalaryReports()
         {
+            await SetUserInfoAsync();
             var currentDate = DateTime.UtcNow;
             int currentMonth = currentDate.Month;
             int currentYear = currentDate.Year;

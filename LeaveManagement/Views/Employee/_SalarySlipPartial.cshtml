@@ -1,0 +1,39 @@
+﻿@model SalaryReport
+
+<div style="font-family:Arial, sans-serif; max-width:600px; margin:auto; border:1px solid #ccc; padding:20px;">
+    <h2 style="text-align:center; color:#2c3e50;">Salary Slip</h2>
+    <p style="text-align:center;">For the month of 
+        <strong>@System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(Model.Month) @Model.Year</strong>
+    </p>
+
+    <table style="width:100%; border-collapse:collapse; margin-top:15px;" border="1" cellpadding="8">
+        <tr>
+            <th>Employee Name</th>
+            <td>@Model.User?.UserName</td>
+        </tr>
+        <tr>
+            <th>Total Working Days</th>
+            <td>@Model.TotalWorkingDays</td>
+        </tr>
+        <tr>
+            <th>Leaves Taken This Month</th>
+            <td>@Model.LeaveTakenThisMonth</td>
+        </tr>
+        <tr>
+            <th>Base Salary</th>
+            <td>₹@Model.BaseSalary.ToString("N2")</td>
+        </tr>
+        <tr>
+            <th>Deductions</th>
+            <td>@(Model.Deductions > 0 ? $"₹{Model.Deductions:N2}" : "No deductions")</td>
+        </tr>
+        <tr>
+            <th>Bonuses</th>
+            <td>@(Model.Bonuses > 0 ? $"₹{Model.Bonuses:N2}" : "No bonuses")</td>
+        </tr>
+        <tr>
+            <th><strong>Final Salary</strong></th>
+            <td><strong>₹@Model.FinalSalary.ToString("N2")</strong></td>
+        </tr>
+    </table>
+</div>

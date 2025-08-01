@@ -172,10 +172,11 @@
                                                         <img src="~/assets/img/avatars/1.png" alt class="w-px-40 h-auto rounded-circle" />
                                                     </div>
                                                 </div>
-                                                <div class="flex-grow-1">
-                                                    <h6 class="mb-0">John Doe</h6>
-                                                    <small class="text-muted">Admin</small>
-                                                </div>
+                                             <div class="flex-grow-1">
+                                                 <h6 class="mb-0">@(!string.IsNullOrEmpty(ViewBag.UserName) ? ViewBag.UserName : "Guest")</h6>
+                                                 <small class="text-muted">@(!string.IsNullOrEmpty(ViewBag.UserRole) ? ViewBag.UserRole : "Unknown")</small>
+                                             </div>
+
                                             </div>
                                         </a>
                                     </li>
@@ -188,6 +189,12 @@
                                         </a>
                                     </li>
                                     <li>
+                                       <a class="dropdown-item" asp-controller="Account" asp-action="ChangePassword">
+        <i class="bx bx-cog bx-md me-3"></i>
+        <span>Change Password</span>
+    </a>
+                                    </li>
+                                    @* <li>
                                         <a class="dropdown-item" href="#"> <i class="bx bx-cog bx-md me-3"></i><span>Settings</span> </a>
                                     </li>
                                     <li>
@@ -197,7 +204,7 @@
                                                 <span class="flex-shrink-0 badge rounded-pill bg-danger">4</span>
                                             </span>
                                         </a>
-                                    </li>
+                                    </li> *@
                                     <li>
                                         <div class="dropdown-divider my-1"></div>
                                     </li>
