@@ -386,59 +386,10 @@ namespace LeaveManagement.Controllers
             await _context.SaveChangesAsync();
 
             TempData["Success"] = "Leave request deleted successfully!";
-            return RedirectToAction("PendingLeaves");
+            return RedirectToAction("ApprovedLeaves");
         }
 
-        //[HttpGet]
-        //public async Task<IActionResult> DeleteLeave(int id)
-        //{
-        //    var leave = await _context.LeaveRequests.FindAsync(id);
-        //    if (leave == null)
-        //    {
-        //        return NotFound();
-        //    }
-
-        //    if (leave.Status == LeaveStatus.Approved)
-        //    {
-        //        var leaveStart = leave.StartDate.Date;
-        //        var leaveEnd = leave.EndDate.Date;
-
-        //        for (var dt = leaveStart; dt <= leaveEnd; dt = dt.AddDays(1))
-        //        {
-        //            var salary = await _context.SalaryReports.FirstOrDefaultAsync(s =>
-        //                s.UserId == leave.UserId && s.Month == dt.Month && s.Year == dt.Year);
-
-        //            if (salary != null)
-        //            {
-        //                int totalDaysInMonth = DateTime.DaysInMonth(dt.Year, dt.Month);
-        //                decimal perDaySalary = salary.BaseSalary / totalDaysInMonth;
-        //                float leaveDay = leave.IsHalfDay ? 0.5f : 1f;
-        //                decimal deductionToRemove = perDaySalary * (decimal)leaveDay;
-
-
-        //                salary.LeaveTakenThisMonth -= leaveDay;
-        //                if (salary.LeaveTakenThisMonth < 0) salary.LeaveTakenThisMonth = 0;
-
-
-        //                if (salary.Deductions >= deductionToRemove)
-        //                {
-        //                    salary.Deductions -= deductionToRemove;
-        //                }
-        //                else
-        //                {
-        //                    salary.Deductions = 0;
-        //                }
-        //            }
-        //        }
-        //    }
-
-        //    _context.LeaveRequests.Remove(leave);
-        //    await _context.SaveChangesAsync();
-
-        //    TempData["Success"] = "Leave request deleted successfully!";
-        //    return RedirectToAction("PendingLeaves");
-        //}
-
+     
         [HttpPost]
   
         public async Task<IActionResult> UpdateLeaveStatus(LeaveRequest model)
@@ -467,7 +418,7 @@ namespace LeaveManagement.Controllers
             var startOfYear = new DateTime(currentYear, 1, 1);
             var endOfCurrentMonth = new DateTime(currentYear, currentMonth, DateTime.DaysInMonth(currentYear, currentMonth));
 
-            var users = await _userManager.Users.ToListAsync();
+            var users = await _userManager.GetUsersInRoleAsync("Employee");
             var summaries = new List<UserLeaveSummaryViewModel>();
 
             foreach (var user in users)
@@ -532,7 +483,7 @@ namespace LeaveManagement.Controllers
                     UserId = user.Id,
                     FullName = user.FullName,
                     Email = user.Email,
-                    LeaveTypeName = "Monthly Leave",
+                    LeaveTypeName = "Annual Leave",
                     TotalAllocated = currentMonth,
                     Used = Math.Round(totalPaidUsed, 1),
                     

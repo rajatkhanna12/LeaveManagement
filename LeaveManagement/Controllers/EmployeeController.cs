@@ -114,51 +114,80 @@ namespace LeaveManagement.Controllers
         {
             await SetUserInfoAsync();
             var user = await _userManager.GetUserAsync(User);
+            if (user == null) return NotFound();
 
             var today = DateTime.UtcNow;
             int currentMonth = today.Month;
-            var startOfYear = new DateTime(today.Year, 1, 1);
-            var endOfToday = today;
+            int currentYear = today.Year;
+
+            var startOfYear = new DateTime(currentYear, 1, 1);
+            var endOfCurrentMonth = new DateTime(currentYear, currentMonth, DateTime.DaysInMonth(currentYear, currentMonth));
 
             var approvedLeaves = await _context.LeaveRequests
                 .Where(l => l.UserId == user.Id &&
                             l.Status == LeaveStatus.Approved &&
                             l.EndDate >= startOfYear &&
-                            l.StartDate <= endOfToday)
+                            l.StartDate <= endOfCurrentMonth)
                 .ToListAsync();
 
-            double totalLeaveDays = 0;
+            var leaveDays = new List<(DateTime date, bool isHalfDay)>();
 
             foreach (var leave in approvedLeaves)
             {
                 var leaveStart = leave.StartDate < startOfYear ? startOfYear : leave.StartDate;
-                var leaveEnd = leave.EndDate > endOfToday ? endOfToday : leave.EndDate;
+                var leaveEnd = leave.EndDate > endOfCurrentMonth ? endOfCurrentMonth : leave.EndDate;
 
                 for (var dt = leaveStart; dt <= leaveEnd; dt = dt.AddDays(1))
                 {
-                    if (dt.Year == today.Year)
+                    if (dt.Year == currentYear && dt.Month <= currentMonth)
                     {
-                        totalLeaveDays += leave.IsHalfDay ? 0.5 : 1;
+                        leaveDays.Add((dt, leave.IsHalfDay));
                     }
                 }
             }
 
-            int allocatedPaidLeaves = currentMonth;
-            int usedLeaves = (int)Math.Floor(totalLeaveDays);
-            int remainingPaid = allocatedPaidLeaves - usedLeaves;
+            var leavesByMonth = leaveDays
+                .GroupBy(ld => ld.date.Month)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.ToList()
+                );
 
-            var summary = new List<LeaveSummaryModel>
-    {
-        new LeaveSummaryModel
-        {
-            LeaveTypeName = "Monthly Leave",
-            TotalAllocated = currentMonth,
-            Used = (int)totalLeaveDays,
-            Remaining = (int)(currentMonth - totalLeaveDays)
-        }
-    };
+            double carryForward = 0;
+            double totalPaidUsed = 0;
+            double totalUnpaid = 0;
 
-            return View(summary);
+            for (int month = 1; month <= currentMonth; month++)
+            {
+                double allowed = 1; // Monthly paid leave
+                double takenThisMonth = 0;
+
+                if (leavesByMonth.ContainsKey(month))
+                {
+                    takenThisMonth = leavesByMonth[month].Sum(ld => ld.isHalfDay ? 0.5 : 1);
+                }
+
+                double available = allowed + carryForward;
+                double paidUsed = Math.Min(takenThisMonth, available);
+                double unpaid = Math.Max(0, takenThisMonth - available);
+
+                carryForward = Math.Max(0, available - paidUsed);
+                totalPaidUsed += paidUsed;
+                totalUnpaid += unpaid;
+            }
+
+            var model = new UserLeaveSummaryViewModel
+            {
+                UserId = user.Id,
+                FullName = user.FullName,
+                Email = user.Email,
+                LeaveTypeName = "Annual Leave",
+                TotalAllocated = currentMonth,
+                Used = Math.Round(totalPaidUsed, 1),
+                Remaining = Math.Round(carryForward, 1)
+            };
+
+            return View(model);
         }
 
 
