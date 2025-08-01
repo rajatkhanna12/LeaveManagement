@@ -19,10 +19,32 @@ namespace LeaveManagement.Controllers
             _userManager = userManager;
         
         }
+        // Logged In user
+        private async Task SetUserInfoAsync()
+        {
+            if (User?.Identity != null && User.Identity.IsAuthenticated)
+            {
+                var user = await _userManager.GetUserAsync(User);
+                if (user != null)
+                {
+                    ViewBag.UserName = !string.IsNullOrEmpty(user.FullName) ? user.FullName : user.UserName;
+
+                    var roles = await _userManager.GetRolesAsync(user);
+                    ViewBag.UserRole = roles?.FirstOrDefault() ?? "Employee";
+                    return;
+                }
+            }
+
+            // Default values (for safety)
+            ViewBag.UserName = "Guest";
+            ViewBag.UserRole = "Unknown";
+        }
+
 
         [HttpGet]
         public async Task<IActionResult> ApplyLeave()
         {
+            await SetUserInfoAsync();
             ViewBag.LeaveTypes = await _context.LeaveTypes.ToListAsync();
             return View();
         }
@@ -31,6 +53,7 @@ namespace LeaveManagement.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ApplyLeave(LeaveRequest model)
         {
+            await SetUserInfoAsync();
             var user = await _userManager.GetUserAsync(User);
 
             if (model.StartDate > model.EndDate)
@@ -77,6 +100,7 @@ namespace LeaveManagement.Controllers
         [HttpGet]
         public async Task<IActionResult> MyLeaveSummary()
         {
+            await SetUserInfoAsync();
             var user = await _userManager.GetUserAsync(User);
 
             var today = DateTime.UtcNow;
@@ -131,6 +155,7 @@ namespace LeaveManagement.Controllers
         [HttpGet]
         public async Task<IActionResult> MyLeaves()
         {
+            await SetUserInfoAsync();
             var user = await _userManager.GetUserAsync(User);
 
             var leaves = await _context.LeaveRequests
@@ -153,6 +178,7 @@ namespace LeaveManagement.Controllers
         [HttpGet]
         public async Task<IActionResult> SalaryDetail()
         {
+            await SetUserInfoAsync();
             var user = await _userManager.GetUserAsync(User);
             var today = DateTime.Now;
             var currentMonth = today.Month;
