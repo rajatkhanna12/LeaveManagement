@@ -139,6 +139,26 @@ namespace LeaveManagement.Controllers
             model.Status = LeaveStatus.Approved;
             model.AppliedOn = DateTime.UtcNow;
 
+          
+            var overlapExists = await _context.LeaveRequests.AnyAsync(l =>
+                l.UserId == model.UserId &&
+                l.Status != LeaveStatus.Rejected && 
+                (
+                    (model.StartDate >= l.StartDate && model.StartDate <= l.EndDate) ||  
+                    (model.EndDate >= l.StartDate && model.EndDate <= l.EndDate) ||     
+                    (model.StartDate <= l.StartDate && model.EndDate >= l.EndDate)      
+                )
+            );
+
+            if (overlapExists)
+            {
+                ModelState.AddModelError("", "A leave request already exists within the selected date range for this user.");
+            }
+            if (model.StartDate > model.EndDate)
+            {
+                ModelState.AddModelError("", "Start Date should be before End Date.");
+            }
+
             if (!ModelState.IsValid)
             {
                 var employeeRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "Employee");
@@ -250,6 +270,7 @@ namespace LeaveManagement.Controllers
                 .Where(lr => lr.UserId == id)
                 .Include(lr => lr.User)
                 .Include(lr => lr.LeaveType)
+                .OrderBy(lr => lr.AppliedOn)
                 .ToListAsync();
 
             return View(leaveRequests);
@@ -266,6 +287,121 @@ namespace LeaveManagement.Controllers
 
             return View(request);
         }
+        [HttpGet]
+        public async Task<IActionResult> DeleteLeave(int id)
+        {
+            var leave = await _context.LeaveRequests.FindAsync(id);
+            if (leave == null) return NotFound();
+
+            if (leave.Status == LeaveStatus.Approved)
+            {
+                var user = await _userManager.FindByIdAsync(leave.UserId);
+                if (user == null) return NotFound();
+
+                DateTime current = leave.StartDate.Date;
+                DateTime end = leave.EndDate.Date;
+
+                while (current <= end)
+                {
+                    var year = current.Year;
+                    var month = current.Month;
+
+                    var monthStart = new DateTime(year, month, 1);
+                    var monthEnd = new DateTime(year, month, DateTime.DaysInMonth(year, month));
+
+                    var leaveStart = current > monthStart ? current : monthStart;
+                    var leaveEnd = end < monthEnd ? end : monthEnd;
+
+                    int totalDaysInMonth = DateTime.DaysInMonth(year, month);
+                    int joiningDay = (user.JoiningDate.Year == year && user.JoiningDate.Month == month)
+                                        ? user.JoiningDate.Day
+                                        : 1;
+                    int workingDays = totalDaysInMonth - (joiningDay - 1);
+
+                    decimal perDaySalary = user.BaseSalary / totalDaysInMonth;
+
+                    int fullDays = (leaveEnd - leaveStart).Days + 1;
+                    double leaveDaysInThisMonth = leave.IsHalfDay ? fullDays * 0.5 : fullDays;
+
+                    decimal deductionToRemove = (decimal)leaveDaysInThisMonth * perDaySalary;
+
+                    var report = await _context.SalaryReports
+                        .FirstOrDefaultAsync(r => r.UserId == leave.UserId && r.Month == month && r.Year == year);
+
+                    if (report != null)
+                    {
+                        report.LeaveTakenThisMonth -= (float)leaveDaysInThisMonth;
+                        if (report.LeaveTakenThisMonth < 0)
+                            report.LeaveTakenThisMonth = 0;
+
+                        report.Deductions -= deductionToRemove;
+                        if (report.Deductions < 0)
+                            report.Deductions = 0;
+
+                        report.TotalWorkingDays = workingDays;
+                        report.BaseSalary = Math.Round(perDaySalary * workingDays, 2);
+                    }
+
+                    current = leaveEnd.AddDays(1);
+                }
+            }
+
+            _context.LeaveRequests.Remove(leave);
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = "Leave request deleted successfully!";
+            return RedirectToAction("PendingLeaves");
+        }
+
+        //[HttpGet]
+        //public async Task<IActionResult> DeleteLeave(int id)
+        //{
+        //    var leave = await _context.LeaveRequests.FindAsync(id);
+        //    if (leave == null)
+        //    {
+        //        return NotFound();
+        //    }
+
+        //    if (leave.Status == LeaveStatus.Approved)
+        //    {
+        //        var leaveStart = leave.StartDate.Date;
+        //        var leaveEnd = leave.EndDate.Date;
+
+        //        for (var dt = leaveStart; dt <= leaveEnd; dt = dt.AddDays(1))
+        //        {
+        //            var salary = await _context.SalaryReports.FirstOrDefaultAsync(s =>
+        //                s.UserId == leave.UserId && s.Month == dt.Month && s.Year == dt.Year);
+
+        //            if (salary != null)
+        //            {
+        //                int totalDaysInMonth = DateTime.DaysInMonth(dt.Year, dt.Month);
+        //                decimal perDaySalary = salary.BaseSalary / totalDaysInMonth;
+        //                float leaveDay = leave.IsHalfDay ? 0.5f : 1f;
+        //                decimal deductionToRemove = perDaySalary * (decimal)leaveDay;
+
+
+        //                salary.LeaveTakenThisMonth -= leaveDay;
+        //                if (salary.LeaveTakenThisMonth < 0) salary.LeaveTakenThisMonth = 0;
+
+
+        //                if (salary.Deductions >= deductionToRemove)
+        //                {
+        //                    salary.Deductions -= deductionToRemove;
+        //                }
+        //                else
+        //                {
+        //                    salary.Deductions = 0;
+        //                }
+        //            }
+        //        }
+        //    }
+
+        //    _context.LeaveRequests.Remove(leave);
+        //    await _context.SaveChangesAsync();
+
+        //    TempData["Success"] = "Leave request deleted successfully!";
+        //    return RedirectToAction("PendingLeaves");
+        //}
 
         [HttpPost]
   
@@ -284,6 +420,93 @@ namespace LeaveManagement.Controllers
 
             return RedirectToAction("Index");
         }
+        [HttpGet]
+        public async Task<IActionResult> RemainingLeaves()
+        {
+            var today = DateTime.UtcNow;
+            int currentMonth = today.Month;
+            int currentYear = today.Year;
+
+            var startOfYear = new DateTime(currentYear, 1, 1);
+            var endOfCurrentMonth = new DateTime(currentYear, currentMonth, DateTime.DaysInMonth(currentYear, currentMonth));
+
+            var users = await _userManager.Users.ToListAsync();
+            var summaries = new List<UserLeaveSummaryViewModel>();
+
+            foreach (var user in users)
+            {
+                var approvedLeaves = await _context.LeaveRequests
+                    .Where(l => l.UserId == user.Id &&
+                                l.Status == LeaveStatus.Approved &&
+                                l.EndDate >= startOfYear &&
+                                l.StartDate <= endOfCurrentMonth)
+                    .ToListAsync();
+
+                // Step 1: Flatten all leave days
+                var leaveDays = new List<(DateTime date, bool isHalfDay)>();
+
+                foreach (var leave in approvedLeaves)
+                {
+                    var leaveStart = leave.StartDate < startOfYear ? startOfYear : leave.StartDate;
+                    var leaveEnd = leave.EndDate > endOfCurrentMonth ? endOfCurrentMonth : leave.EndDate;
+
+                    for (var dt = leaveStart; dt <= leaveEnd; dt = dt.AddDays(1))
+                    {
+                        if (dt.Year == currentYear && dt.Month <= currentMonth)
+                        {
+                            leaveDays.Add((dt, leave.IsHalfDay));
+                        }
+                    }
+                }
+
+                // Step 2: Group by month
+                var leavesByMonth = leaveDays
+                    .GroupBy(ld => ld.date.Month)
+                    .ToDictionary(
+                        g => g.Key,
+                        g => g.ToList()
+                    );
+
+                double carryForward = 0;
+                double totalPaidUsed = 0;
+                double totalUnpaid = 0;
+
+                for (int month = 1; month <= currentMonth; month++)
+                {
+                    double allowed = 1; // Paid leaves allocated per month
+                    double takenThisMonth = 0;
+
+                    if (leavesByMonth.ContainsKey(month))
+                    {
+                        takenThisMonth = leavesByMonth[month].Sum(ld => ld.isHalfDay ? 0.5 : 1);
+                    }
+
+                    double available = allowed + carryForward;
+                    double paidUsed = Math.Min(takenThisMonth, available);
+                    double unpaid = Math.Max(0, takenThisMonth - available);
+
+                    carryForward = Math.Max(0, available - paidUsed);
+                    totalPaidUsed += paidUsed;
+                    totalUnpaid += unpaid;
+                }
+
+                summaries.Add(new UserLeaveSummaryViewModel
+                {
+                    UserId = user.Id,
+                    FullName = user.FullName,
+                    Email = user.Email,
+                    LeaveTypeName = "Monthly Leave",
+                    TotalAllocated = currentMonth,
+                    Used = Math.Round(totalPaidUsed, 1),
+                    
+                    Remaining = Math.Round(carryForward, 1)
+                });
+            }
+
+            return View(summaries);
+        }
+
+
 
         #region Private
 
@@ -339,6 +562,8 @@ namespace LeaveManagement.Controllers
                     var leaveEnd = leave.EndDate > new DateTime(currentYear, currentMonth, totalDaysInMonth)
                         ? new DateTime(currentYear, currentMonth, totalDaysInMonth)
                         : leave.EndDate;
+                    if (leave.StartDate < new DateTime(currentYear, currentMonth, 1) && leave.EndDate < new DateTime(currentYear, currentMonth, 1))
+                        continue;
 
                     int days = (leaveEnd - leaveStart).Days + 1;
                     double leaveDays = leave.IsHalfDay ? days * 0.5 : days;
@@ -366,15 +591,12 @@ namespace LeaveManagement.Controllers
 
             await _context.SaveChangesAsync();
         }
-
         private async Task CreateOrUpdateSalaryReportFromLeave(string userId, DateTime leaveStartDate, DateTime leaveEndDate, bool isHalfDay)
         {
-            int leaveYear = leaveStartDate.Year;
             var user = await _userManager.FindByIdAsync(userId);
             if (user == null || !user.IsActive) return;
 
             var today = DateTime.UtcNow;
-            int currentMonth = today.Month;
             var startOfYear = new DateTime(today.Year, 1, 1);
             var endOfToday = today;
 
@@ -382,72 +604,82 @@ namespace LeaveManagement.Controllers
                 .Where(l => l.UserId == userId &&
                             l.Status == LeaveStatus.Approved &&
                             l.EndDate >= startOfYear &&
-                            l.StartDate <= endOfToday)
+                            l.StartDate <= endOfToday &&
+                            !(l.StartDate == leaveStartDate && l.EndDate == leaveEndDate))
                 .ToListAsync();
 
-            double totalLeaveDaysAlreadyTaken = 0;
+            var currentLeaveDays = new List<(DateTime date, bool isHalfDay)>();
+            for (var dt = leaveStartDate; dt <= leaveEndDate; dt = dt.AddDays(1))
+            {
+                currentLeaveDays.Add((dt, isHalfDay));
+            }
+
+            var combinedLeaveDays = new Dictionary<(int year, int month), List<(DateTime date, bool isHalfDay)>>();
+
+            foreach (var item in currentLeaveDays)
+            {
+                var key = (item.date.Year, item.date.Month);
+                if (!combinedLeaveDays.ContainsKey(key))
+                    combinedLeaveDays[key] = new List<(DateTime, bool)>();
+
+                combinedLeaveDays[key].Add(item);
+            }
 
             foreach (var leave in allApprovedLeaves)
             {
-                // Exclude the current leave being processed
-                if (leave.StartDate == leaveStartDate && leave.EndDate == leaveEndDate)
-                    continue;
-
-                var rangeStart = leave.StartDate < startOfYear ? startOfYear : leave.StartDate;
-                var rangeEnd = leave.EndDate > endOfToday ? endOfToday : leave.EndDate;
-
-                for (var dt = rangeStart; dt <= rangeEnd; dt = dt.AddDays(1))
+                for (var dt = leave.StartDate; dt <= leave.EndDate; dt = dt.AddDays(1))
                 {
-                    if (dt.Year == today.Year)
-                        totalLeaveDaysAlreadyTaken += leave.IsHalfDay ? 0.5 : 1;
+                    var key = (dt.Year, dt.Month);
+                    if (!combinedLeaveDays.ContainsKey(key))
+                        combinedLeaveDays[key] = new List<(DateTime, bool)>();
+
+                    combinedLeaveDays[key].Add((dt, leave.IsHalfDay));
                 }
             }
 
-            DateTime current = leaveStartDate;
+            var orderedMonths = combinedLeaveDays.OrderBy(k => (k.Key.year, k.Key.month)).ToList();
+            var paidLeaveUsedByYear = new Dictionary<int, double>();
 
-            while (current <= leaveEndDate)
+            foreach (var monthGroup in orderedMonths)
             {
-                var monthStart = new DateTime(current.Year, current.Month, 1);
-                var monthEnd = new DateTime(current.Year, current.Month, DateTime.DaysInMonth(current.Year, current.Month));
+                int year = monthGroup.Key.year;
+                int month = monthGroup.Key.month;
+                var leaveDays = monthGroup.Value;
 
-                var leaveStart = current > monthStart ? current : monthStart;
-                var leaveEnd = leaveEndDate < monthEnd ? leaveEndDate : monthEnd;
+                double totalLeaveDaysThisMonth = leaveDays.Sum(x => x.isHalfDay ? 0.5 : 1);
 
-                int fullDays = (leaveEnd - leaveStart).Days + 1;
-                double leaveDaysInThisMonth = isHalfDay ? fullDays * 0.5 : fullDays;
+                if (!paidLeaveUsedByYear.ContainsKey(year))
+                    paidLeaveUsedByYear[year] = 0;
 
-                int allowedPaidLeaveTillThisMonth = current.Month;
-                double remainingPaidLeaves = allowedPaidLeaveTillThisMonth - totalLeaveDaysAlreadyTaken;
+                double allowedPaidLeaveTillThisMonth = month;
+                double availablePaidLeave = Math.Max(0, allowedPaidLeaveTillThisMonth - paidLeaveUsedByYear[year]);
+                double paidLeave = Math.Min(availablePaidLeave, totalLeaveDaysThisMonth);
+                double unpaidLeave = totalLeaveDaysThisMonth - paidLeave;
 
-                double paid = Math.Min(leaveDaysInThisMonth, Math.Max(0, remainingPaidLeaves));
-                double unpaid = leaveDaysInThisMonth - paid;
+                paidLeaveUsedByYear[year] += paidLeave;
 
-                totalLeaveDaysAlreadyTaken += leaveDaysInThisMonth;
-
-                var report = await _context.SalaryReports
-                    .FirstOrDefaultAsync(r => r.UserId == userId && r.Year == current.Year && r.Month == current.Month);
-
-                int totalDaysInMonth = DateTime.DaysInMonth(current.Year, current.Month);
-                int joiningDay = (user.JoiningDate.Year == current.Year && user.JoiningDate.Month == current.Month)
-                    ? user.JoiningDate.Day
-                    : 1;
+                int totalDaysInMonth = DateTime.DaysInMonth(year, month);
+                int joiningDay = (user.JoiningDate.Year == year && user.JoiningDate.Month == month) ? user.JoiningDate.Day : 1;
                 int totalWorkingDays = totalDaysInMonth - (joiningDay - 1);
 
                 decimal perDaySalary = user.BaseSalary / totalDaysInMonth;
-                decimal deductions = (decimal)unpaid * perDaySalary;
-                decimal proRatedBaseSalary = user.BaseSalary * totalWorkingDays / totalDaysInMonth;
+                decimal proRatedBaseSalary = perDaySalary * totalWorkingDays;
+                decimal deductions = (decimal)unpaidLeave * perDaySalary;
+
+                var report = await _context.SalaryReports
+                    .FirstOrDefaultAsync(r => r.UserId == userId && r.Year == year && r.Month == month);
 
                 if (report == null)
                 {
                     report = new SalaryReport
                     {
                         UserId = userId,
-                        Year = current.Year,
-                        Month = current.Month,
+                        Year = year,
+                        Month = month,
                         TotalWorkingDays = totalWorkingDays,
-                        BaseSalary = proRatedBaseSalary,
-                        LeaveTakenThisMonth = (float)leaveDaysInThisMonth,
-                        Deductions = deductions,
+                        BaseSalary = Math.Round(proRatedBaseSalary, 2),
+                        LeaveTakenThisMonth = (float)Math.Round(totalLeaveDaysThisMonth, 2),
+                        Deductions = Math.Round(deductions, 2),
                         Bonuses = 0,
                         IsPaid = false
                     };
@@ -455,19 +687,15 @@ namespace LeaveManagement.Controllers
                 }
                 else
                 {
-                    report.LeaveTakenThisMonth += (float)leaveDaysInThisMonth;
-                    report.Deductions += deductions;
                     report.TotalWorkingDays = totalWorkingDays;
-                    report.BaseSalary = proRatedBaseSalary;
+                    report.BaseSalary = Math.Round(proRatedBaseSalary, 2);
+                    report.LeaveTakenThisMonth = (float)Math.Round(totalLeaveDaysThisMonth, 2);
+                    report.Deductions = Math.Round(deductions, 2);
                 }
-
-                current = leaveEnd.AddDays(1);
             }
 
             await _context.SaveChangesAsync();
         }
-
-
 
     }
     #endregion

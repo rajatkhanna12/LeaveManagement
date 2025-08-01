@@ -5,7 +5,7 @@
 <div class="card">
     <h5 class="card-header">Previous Salary Reports</h5>
     <div class="table-responsive text-nowrap">
-        <table class="table table-hover">
+        <table class="table table-hover" id="SalaryList">
             <thead>
                 <tr>
                      <th> Name</th>
@@ -38,3 +38,13 @@
         </table>
     </div>
 </div>
+<script>
+    $(document).ready(function () {
+        $('#SalaryList').DataTable({
+            "pageLength": 10,
+            "lengthChange": true,
+            "ordering": true,
+            "info": true
+        });
+    });
+</script>

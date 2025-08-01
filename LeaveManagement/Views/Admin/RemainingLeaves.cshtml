@@ -1,0 +1,62 @@
+﻿@model IEnumerable<UserLeaveSummaryViewModel>
+
+@{
+    ViewData["Title"] = "All Users Leave Summary";
+    Layout = "~/Views/Shared/_ManagerLayout.cshtml";
+}
+
+<div class="card">
+    <h5 class="card-header">All Employees Leave Summary</h5>
+    <div class="table-responsive text-nowrap">
+        <table class="table table-hover" id="allLeaveSummaryTable">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+             
+                    <th>Total Allocated</th>
+                    <th>Used</th>
+                    <th>Remaining</th>
+                </tr>
+            </thead>
+            <tbody class="table-border-bottom-0">
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>
+                            <i class="bx bxs-user bx-md text-primary me-4"></i>
+                            <span>@item.FullName</span>
+                        </td>
+                        <td>@item.Email</td>
+                      
+                        <td>@item.TotalAllocated</td>
+                        <td>@item.Used</td>
+                        <td>
+                            @if (item.Remaining > 0)
+                            {
+                                <span class="badge bg-label-success me-1">
+                                    @item.Remaining
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-label-danger me-1">
+                                    No Paid Leave available
+                                </span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- DataTables init -->
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('#allLeaveSummaryTable').DataTable();
+        });
+    </script>
+}
