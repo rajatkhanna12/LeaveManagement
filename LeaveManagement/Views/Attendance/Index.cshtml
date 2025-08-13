@@ -1,0 +1,176 @@
+﻿@model List<LeaveManagement.VM.AttendanceReportViewModel>
+@{
+    ViewData["Title"] = "Attendance";
+    Layout = "~/Views/Shared/_EmployeeLayout.cshtml";
+    bool hasCheckedIn = ViewBag.HasCheckedIn ?? false;
+    bool hasCheckedOut = ViewBag.HasCheckedOut ?? false;
+}
+
+<div class="card p-2 m-2">
+    <h2>Attendance</h2>
+
+    @if (TempData["Message"] != null)
+    {
+        <div style="color: green;">@TempData["Message"]</div>
+    }
+
+    <!-- Hidden camera preview -->
+    <video id="video" width="320" height="240" autoplay playsinline style="display:none;"></video>
+    <canvas id="canvas" width="320" height="240" style="display:none;"></canvas>
+
+    <div class="d-flex align-items-center gap-2">
+
+        <!-- Check In -->
+        <form asp-action="CheckIn" method="post">
+            <input type="hidden" name="imageData" id="checkinImageData" />
+            <button type="button" id="checkInBtn" class="btn btn-primary"
+                    style="padding:10px 20px; background:green; color:white; margin-right:10px;"
+            @(hasCheckedIn ? "disabled=\"disabled\"" : "")>
+                Check In
+            </button>
+        </form>
+
+        <!-- Check Out -->
+        <form asp-action="CheckOut" method="post">
+            <input type="hidden" name="imageData" id="checkoutImageData" />
+            <button type="button" id="checkOutBtn" class="btn btn-primary"
+                    style="padding:10px 20px; background:red; color:white;"
+            @((!hasCheckedIn || hasCheckedOut) ? "disabled=\"disabled\"" : "")>
+                Check Out
+            </button>
+        </form>
+    </div>
+</div>
+
+<br />
+
+<div class="card p-2 m-2">
+    <h3>Your Attendance Report</h3>
+    <table id="attendanceTable" class="table table-bordered table-striped">
+        <thead>
+            <tr>
+                <th>Checked In Time</th>
+                <th>Checked Out Time</th>
+                <th>Checked In Image</th>
+                <th>Checked Out Image</th>
+                <th>Working Hours</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model != null && Model.Any())
+            {
+                foreach (var item in Model)
+                {
+                    <tr>
+                        <td>@item.CheckedInTime.ToString("dd-MMM-yyyy hh:mm tt")</td>
+                        <td>@(item.CheckedOutTime.HasValue ? item.CheckedOutTime.Value.ToString("dd-MMM-yyyy hh:mm tt") : "-")</td>
+                        
+                        <td>
+                                @(string.IsNullOrEmpty(item.CheckedInImage)
+                                    ? "-"
+                                    : Html.Raw($"<img src='{item.CheckedInImage}' width='80' alt='Check In' />"))
+                        </td>
+
+
+                        <td>
+                                    @(string.IsNullOrEmpty(item.CheckedOutImage)
+                                        ? "-"
+                                        : Html.Raw($"<img src='{item.CheckedOutImage}' width='80' alt='Check In' />"))
+                        </td>
+
+                 
+                        <td>@(item.WorkingHours.HasValue ? $"{item.WorkingHours.Value:F2} hrs" : "-")</td>
+                    </tr>
+                }
+            }
+            else
+            {
+                @* <tr>
+                    <td colspan="5" class="text-center">No attendance records found.</td>
+                </tr> *@
+            }
+        </tbody>
+    </table>
+</div>
+
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+
+
+@section Scripts{
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+
+    <script>
+           $(document).ready(function () {
+        if ($('#attendanceTable').length) {
+            $('#attendanceTable').DataTable({
+                "order": [[0, "desc"]],
+                "columnDefs": [
+                    { "orderable": false, "targets": [2, 3] } // images not sortable
+                ]
+            });
+        }
+
+
+
+
+         let cameraAllowed = false;
+        let video = document.getElementById("video");
+
+                // Start camera
+                function startCamera() {
+                    navigator.mediaDevices.getUserMedia({ video: true })
+                        .then(function (stream) {
+                            video.srcObject = stream;
+                            cameraAllowed = true;
+                            video.play();
+                        })
+                        .catch(function (err) {
+                            cameraAllowed = false;
+                            alert("Camera access is required!");
+                            console.error(err);
+                        });
+                }
+
+                startCamera();
+
+                // Capture photo & submit form
+                function captureAndSend(hiddenFieldId, form) {
+                    const canvas = document.getElementById("canvas");
+                    const context = canvas.getContext('2d');
+
+                    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                    const imageData = canvas.toDataURL('image/png');
+                    document.getElementById(hiddenFieldId).value = imageData;
+
+                    form.submit();
+                }
+
+                // Check In button
+                $("#checkInBtn").on("click", function () {
+                    if (!cameraAllowed) {
+                        alert("Please allow camera access before checking in!");
+                        return;
+                    }
+                    captureAndSend('checkinImageData', $(this).closest('form')[0]);
+                });
+
+                // Check Out button
+                $("#checkOutBtn").on("click", function () {
+                    if (!cameraAllowed) {
+                        alert("Please allow camera access before checking out!");
+                        return;
+                    }
+                    if (!confirm("Are you sure you want to check out?")) {
+                        return;
+                    }
+                    captureAndSend('checkoutImageData', $(this).closest('form')[0]);
+                });
+           });
+
+
+
+    </script>
+}
+   
