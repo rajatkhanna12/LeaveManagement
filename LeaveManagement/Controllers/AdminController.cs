@@ -1,7 +1,9 @@
 ﻿using LeaveManagement.Models;
+using LeaveManagement.VM;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
 namespace LeaveManagement.Controllers
@@ -45,10 +47,76 @@ namespace LeaveManagement.Controllers
             return View(employees.AsEnumerable());
         }
 
+        public IActionResult TodayAttendanceReport()
+        {
+
+
+            var today = DateTime.Today;
+
+            var todayData = _context.tblAttendances
+                .Where(a => a.CheckedInTime.Value.Date == today)
+                .Select(a => new
+                {
+                    a.UserId,
+                    a.CheckedInTime,
+                    a.CheckedoutTime,
+                    a.CheckedinImage,
+                    a.CheckedoutImage,
+                    UserName = _context.Users
+                        .Where(u => u.Id == a.UserId.ToString())
+                        .Select(u => u.FullName)
+                        .FirstOrDefault()
+                })
+                .AsEnumerable()
+                .GroupBy(a => new { a.UserId, a.UserName })
+                .Select(g => new TodayAttendanceViewModel
+                {
+                    UserId = g.Key.UserId,
+                    UserName = g.Key.UserName,
+                    AttendanceHistory = g.Select(x => new AttendanceReportViewModel
+                    {
+                        CheckedInTime = (DateTime)x.CheckedInTime,
+                        CheckedOutTime = x.CheckedoutTime,
+                        CheckedInImage = x.CheckedinImage,
+                        CheckedOutImage = x.CheckedoutImage,
+                        WorkingHours = x.CheckedoutTime != null
+    ? ((x.CheckedoutTime.Value - x.CheckedInTime.Value) - TimeSpan.FromMinutes(45)).TotalHours : (double?)null
+                    }).ToList()
+                })
+                .ToList();
+
+            return View(todayData);
+        }
+        public IActionResult UserAttendance(Guid userId)
+        {
+            var userName = _context.Users
+                .Where(u => u.Id == userId.ToString())
+                .Select(u => u.FullName)
+                .FirstOrDefault();
+
+            ViewBag.UserName = userName;
+            var report = _context.tblAttendances
+               .Where(a => a.UserId == userId)
+               .OrderByDescending(a => a.CheckedInTime)
+               .Select(a => new AttendanceReportViewModel
+               {
+                   CheckedInTime = a.CheckedInTime.Value,
+                   CheckedOutTime = a.CheckedoutTime,
+                   CheckedInImage = a.CheckedinImage,
+                   CheckedOutImage = a.CheckedoutImage,
+                   WorkingHours = a.CheckedoutTime != null
+                        ? ((a.CheckedoutTime.Value - a.CheckedInTime.Value) - TimeSpan.FromMinutes(45)).TotalHours
+                        : (double?)null
+               })
+                .ToList();
+
+            return View(report);
+        }
+
 
         public async Task<IActionResult> Create()
         {
-             await SetUserInfoAsync();
+            await SetUserInfoAsync();
             return View();
         }
 
@@ -143,13 +211,13 @@ namespace LeaveManagement.Controllers
         }
 
         [HttpGet]
-       
+
         public async Task<IActionResult> AddLeave()
         {
             await SetUserInfoAsync();
             var employeeRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "Employee");
 
-           
+
             var employees = await (from user in _context.Users
                                    join userRole in _context.UserRoles on user.Id equals userRole.UserId
                                    where userRole.RoleId == employeeRole.Id
@@ -167,14 +235,14 @@ namespace LeaveManagement.Controllers
             model.Status = LeaveStatus.Approved;
             model.AppliedOn = DateTime.UtcNow;
 
-          
+
             var overlapExists = await _context.LeaveRequests.AnyAsync(l =>
                 l.UserId == model.UserId &&
-                l.Status != LeaveStatus.Rejected && 
+                l.Status != LeaveStatus.Rejected &&
                 (
-                    (model.StartDate >= l.StartDate && model.StartDate <= l.EndDate) ||  
-                    (model.EndDate >= l.StartDate && model.EndDate <= l.EndDate) ||     
-                    (model.StartDate <= l.StartDate && model.EndDate >= l.EndDate)      
+                    (model.StartDate >= l.StartDate && model.StartDate <= l.EndDate) ||
+                    (model.EndDate >= l.StartDate && model.EndDate <= l.EndDate) ||
+                    (model.StartDate <= l.StartDate && model.EndDate >= l.EndDate)
                 )
             );
 
@@ -217,7 +285,7 @@ namespace LeaveManagement.Controllers
             return View(user);
         }
 
-        
+
         [HttpPost]
         public async Task<IActionResult> Edit(ApplicationUser model, decimal baseSalary)
         {
@@ -244,7 +312,7 @@ namespace LeaveManagement.Controllers
             return View(model);
         }
 
-       
+
         public async Task<IActionResult> Delete(string id)
         {
             await SetUserInfoAsync();
@@ -265,7 +333,7 @@ namespace LeaveManagement.Controllers
                 .OrderByDescending(lr => lr.AppliedOn)
                 .ToListAsync();
 
-            return View( leaves); 
+            return View(leaves);
         }
 
         [HttpGet]
@@ -279,7 +347,7 @@ namespace LeaveManagement.Controllers
                 .OrderByDescending(lr => lr.AppliedOn)
                 .ToListAsync();
 
-            return View( leaves);
+            return View(leaves);
         }
 
         [HttpGet]
@@ -300,7 +368,7 @@ namespace LeaveManagement.Controllers
         public async Task<IActionResult> LeaveByUser(string id)
         {
             await SetUserInfoAsync();
-            ViewBag.UserId = id;    
+            ViewBag.UserId = id;
             var leaveRequests = await _context.LeaveRequests
                 .Where(lr => lr.UserId == id)
                 .Include(lr => lr.User)
@@ -389,21 +457,21 @@ namespace LeaveManagement.Controllers
             return RedirectToAction("ApprovedLeaves");
         }
 
-     
+
         [HttpPost]
-  
+
         public async Task<IActionResult> UpdateLeaveStatus(LeaveRequest model)
         {
             await SetUserInfoAsync();
             var request = await _context.LeaveRequests.FindAsync(model.Id);
             if (request == null) return NotFound();
 
-           
+
             if (request.Status == LeaveStatus.Pending)
             {
                 request.Status = model.Status;
                 await _context.SaveChangesAsync();
-               await  CreateOrUpdateSalaryReportFromLeave(model.UserId, model.StartDate, model.EndDate,model.IsHalfDay);
+                await CreateOrUpdateSalaryReportFromLeave(model.UserId, model.StartDate, model.EndDate, model.IsHalfDay);
             }
 
             return RedirectToAction("Index");
@@ -486,7 +554,7 @@ namespace LeaveManagement.Controllers
                     LeaveTypeName = "Annual Leave",
                     TotalAllocated = currentMonth,
                     Used = Math.Round(totalPaidUsed, 1),
-                    
+
                     Remaining = Math.Round(carryForward, 1)
                 });
             }
@@ -537,7 +605,7 @@ namespace LeaveManagement.Controllers
                     .Where(l => l.UserId == employee.Id &&
                                 l.Status == LeaveStatus.Approved &&
                                 l.StartDate.Year == currentYear &&
-                                l.StartDate.Month <= currentMonth )
+                                l.StartDate.Month <= currentMonth)
                     .ToListAsync();
 
                 double leaveTaken = 0;

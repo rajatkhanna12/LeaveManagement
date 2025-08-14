@@ -1,0 +1,86 @@
+﻿@model List<LeaveManagement.VM.AttendanceReportViewModel>
+@{
+    ViewData["Title"] = "UserAttendance";
+    Layout = "~/Views/Shared/_ManagerLayout.cshtml";
+}
+
+
+<div class="card p-3 m-3">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>Attendance Report for <b>@ViewBag.UserName</b></h2>
+
+        <!-- Back Button -->
+        <a asp-action="TodayAttendanceReport" class="btn btn-primary">
+             Back
+        </a>
+    </div>
+
+    <table id="UserTableRep" class="table table-bordered table-striped">
+        <thead>
+            <tr>
+                <th>Checked In Time</th>
+                <th>Checked Out Time</th>
+                <th>Checked In Image</th>
+                <th>Checked Out Image</th>
+                <th>Working Hours</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.CheckedInTime.ToString("dd-MMM-yyyy hh:mm tt")</td>
+                    <td>
+                        @(item.CheckedOutTime.HasValue
+                            ? item.CheckedOutTime.Value.ToString("dd-MMM-yyyy hh:mm tt")
+                            : "N/A")
+                    </td>
+                    <td>
+                        @if (!string.IsNullOrEmpty(item.CheckedInImage))
+                        {
+                            <img src="@Url.Content(item.CheckedInImage)" alt="Checked In" width="80" />
+                        }
+                        else
+                        {
+                            <span>No Image</span>
+                        }
+                    </td>
+                    <td>
+                        @if (!string.IsNullOrEmpty(item.CheckedOutImage))
+                        {
+                            <img src="@Url.Content(item.CheckedOutImage)" alt="Checked Out" width="80" />
+                        }
+                        else
+                        {
+                            <span>No Image</span>
+                        }
+                    </td>
+                    <td>
+                        @(item.WorkingHours.HasValue
+                            ? item.WorkingHours.Value.ToString("0.##") + " hrs"
+                            : "N/A")
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            if ($('#UserTableRep').length) {
+                $('#UserTableRep').DataTable({
+                    "order": [[0, "desc"]],
+                    "columnDefs": [
+                        { "orderable": false, "targets": [2, 3] }
+                    ]
+                });
+            }
+        });
+    </script>
+}

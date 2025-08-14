@@ -73,8 +73,9 @@ namespace LeaveManagement.Controllers
             if (result.Succeeded)
             {
                 await _signInManager.RefreshSignInAsync(user);
-              //  TempData["Success"] = "Your password has been changed successfully.";
-                return RedirectToAction("Login");
+                TempData["Success"] = " Your password has been changed successfully.";
+                //return RedirectToAction("Login");
+                return RedirectToAction("ChangePassword");
             }
 
             foreach (var error in result.Errors)
