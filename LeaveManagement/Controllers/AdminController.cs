@@ -373,7 +373,7 @@ namespace LeaveManagement.Controllers
                 .Where(lr => lr.UserId == id)
                 .Include(lr => lr.User)
                 .Include(lr => lr.LeaveType)
-                .OrderByDescending(lr => lr.AppliedOn)
+                    .OrderBy(lr => lr.StartDate)
                 .ToListAsync();
 
             return View(leaveRequests);

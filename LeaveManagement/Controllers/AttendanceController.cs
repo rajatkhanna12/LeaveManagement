@@ -60,7 +60,15 @@ namespace LeaveManagement.Controllers
                 return RedirectToAction("Index");
             }
             string imagePath = SaveBase64Image(imageData, "CheckedIn");
+            var today = DateTime.Today;
+            var alreadyCheckedIn = await _context.tblAttendances
+                .AnyAsync(a => a.UserId == userId && a.CheckedInTime == today);
 
+            if (alreadyCheckedIn)
+            {
+                TempData["Message"] = "You have already checked in today!";
+                return RedirectToAction("Index");
+            }
             var attendance = new TblAttendance
             {
                 UserId = userId,

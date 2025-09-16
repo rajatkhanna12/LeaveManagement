@@ -153,6 +153,7 @@
                         alert("Please allow camera access before checking in!");
                         return;
                     }
+                      $(this).prop("disabled", true);
                     captureAndSend('checkinImageData', $(this).closest('form')[0]);
                 });
 

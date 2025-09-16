@@ -17,8 +17,14 @@ namespace LeaveManagement.Controllers
         }
 
         [HttpGet]
-        public IActionResult Login() => View();
-
+        public async Task<IActionResult> Login(){
+             var user = await _userManager.GetUserAsync(User);
+            if (user != null)
+            {
+                return RedirectToAction("ApplyLeave", "Employee");
+            }
+         return View();
+        }
         [HttpPost]
         public async Task<IActionResult> Login(LoginViewModel model, string? returnUrl = null)
         {
