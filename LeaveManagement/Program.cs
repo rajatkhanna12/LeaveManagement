@@ -17,6 +17,16 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 })
 .AddEntityFrameworkStores<LeaveDbContext>()
 .AddDefaultTokenProviders();
+builder.Services.ConfigureApplicationCookie(options =>
+{
+   
+    options.LoginPath = "/Account/Login";
+    options.LogoutPath = "/Account/Logout";   
+    options.ExpireTimeSpan = TimeSpan.FromHours(8); // Example: 8 hours    
+    options.SlidingExpiration = true; 
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+});
+
 builder.Services.AddScoped<SalaryViewModel>();
 var app = builder.Build();
 using (var scope = app.Services.CreateScope())

@@ -32,6 +32,7 @@
                         <td>
                             <a asp-action="SalaryApprove" asp-route-id="@report.Id" class="btn btn-sm btn-outline-secondary">Approve</a>
                         </td>
+                        <td style="display:none;">@($"{report.Year}{report.Month:D2}")</td>
                     </tr>
                 }
             </tbody>
@@ -40,11 +41,15 @@
 </div>
 <script>
     $(document).ready(function () {
-        $('#SalaryList').DataTable({
-            "pageLength": 10,
-            "lengthChange": true,
-            "ordering": true,
-            "info": true
-        });
-    });
+         $('#SalaryList').DataTable({
+             "pageLength": 10,
+             "lengthChange": true,
+             "ordering": true,
+             "info": true,
+             "order": [[8, "desc"]], // hidden column index
+             "columnDefs": [
+                 { "targets": [8], "visible": false } // hide sort column
+             ]
+         });
+     });
 </script>

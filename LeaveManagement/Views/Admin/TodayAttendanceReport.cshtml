@@ -19,31 +19,50 @@
             </tr>
         </thead>
         <tbody>
-                @foreach (var user in Model)
+            @foreach (var user in Model)
             {
-                @foreach (var item in user.AttendanceHistory)
-            {
-                <tr>
-                    <td>@user.UserName</td>
-                    <td>@item.CheckedInTime.ToString("dd-MMM-yyyy hh:mm tt")</td>
-                    <td>@(item.CheckedOutTime?.ToString("dd-MMM-yyyy hh:mm tt") ?? "-")</td>
-                    <td>
-                        @(string.IsNullOrEmpty(item.CheckedInImage)
-                            ? "-"
-                            : Html.Raw($"<img src='{item.CheckedInImage}' width='80' />"))
-                    </td>
-                    <td>
-                        @(string.IsNullOrEmpty(item.CheckedOutImage)
-                            ? "-"
-                            : Html.Raw($"<img src='{item.CheckedOutImage}' width='80' />"))
-                    </td>
-                    <td>@(item.WorkingHours.HasValue ? $"{item.WorkingHours.Value:F2} hrs" : "-")</td>
-                    <td>
+                if (user.AttendanceHistory != null && user.AttendanceHistory.Any())
+                {
+                    @foreach (var item in user.AttendanceHistory)
+                    {
+                        <tr>
+                            <td>@user.UserName</td>
+                            <td>@item.CheckedInTime.ToString("dd-MMM-yyyy hh:mm tt")</td>
+                            <td>@(item.CheckedOutTime?.ToString("dd-MMM-yyyy hh:mm tt") ?? "-")</td>
+                            <td>
+                                @(string.IsNullOrEmpty(item.CheckedInImage)
+                                    ? "-"
+                                    : Html.Raw($"<img src='{item.CheckedInImage}' width='80' />"))
+                            </td>
+                            <td>
+                                @(string.IsNullOrEmpty(item.CheckedOutImage)
+                                    ? "-"
+                                    : Html.Raw($"<img src='{item.CheckedOutImage}' width='80' />"))
+                            </td>
+                            <td>@(item.WorkingHours.HasValue ? $"{item.WorkingHours.Value:F2} hrs" : "-")</td>
+                            <td>
+                                <a class="btn btn-primary" href="@Url.Action("UserAttendance", new { userId = user.UserId })">View</a>
+
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    // ❌ No attendance for today → show "Absent"
+                    <tr>
+                        <td>@user.UserName</td>
+                        <td class="text-danger">-</td>
+                        <td class="text-danger">-</td>
+                        <td class="text-danger">-</td>
+                        <td class="text-danger">-</td>
+                        <td class="text-danger">Absent</td>
+                        <td>
                             <a class="btn btn-primary" href="@Url.Action("UserAttendance", new { userId = user.UserId })">View</a>
-                       
-                    </td>
-                </tr>
-            }
+                        </td>
+                    </tr>
+                }
+
             }
         </tbody>
     </table>
@@ -59,9 +78,9 @@
         $(document).ready(function () {
             if ($('#todayTable').length) {
                 $('#todayTable').DataTable({
-                    "order": [[0, "desc"]],
+                    "order": [[1, "desc"]],
                     "columnDefs": [
-                        { "orderable": false, "targets": [2, 3] }
+                        { "orderable": false, "targets":  [3, 4, 6] }
                     ]
                 });
             }

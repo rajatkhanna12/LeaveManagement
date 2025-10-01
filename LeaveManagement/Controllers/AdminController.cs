@@ -50,42 +50,67 @@ namespace LeaveManagement.Controllers
         public IActionResult TodayAttendanceReport()
         {
 
-
             var today = DateTime.Today;
 
-            var todayData = _context.tblAttendances
-                .Where(a => a.CheckedInTime.Value.Date == today)
-                .Select(a => new
+            var users = _context.Users.Where(u=>u.Role == "Employee").ToList();
+
+            var todayData = users
+                .Select(user => new TodayAttendanceViewModel
                 {
-                    a.UserId,
-                    a.CheckedInTime,
-                    a.CheckedoutTime,
-                    a.CheckedinImage,
-                    a.CheckedoutImage,
-                    UserName = _context.Users
-                        .Where(u => u.Id == a.UserId.ToString())
-                        .Select(u => u.FullName)
-                        .FirstOrDefault()
-                })
-                .AsEnumerable()
-                .GroupBy(a => new { a.UserId, a.UserName })
-                .Select(g => new TodayAttendanceViewModel
-                {
-                    UserId = g.Key.UserId,
-                    UserName = g.Key.UserName,
-                    AttendanceHistory = g.Select(x => new AttendanceReportViewModel
-                    {
-                        CheckedInTime = (DateTime)x.CheckedInTime,
-                        CheckedOutTime = x.CheckedoutTime,
-                        CheckedInImage = x.CheckedinImage,
-                        CheckedOutImage = x.CheckedoutImage,
-                        WorkingHours = x.CheckedoutTime != null
-    ? ((x.CheckedoutTime.Value - x.CheckedInTime.Value) - TimeSpan.FromMinutes(45)).TotalHours : (double?)null
-                    }).ToList()
+                    UserId = Guid.Parse(user.Id),   // Assuming Id is string
+                    UserName = user.FullName,
+                    AttendanceHistory = _context.tblAttendances
+                        .Where(a => a.UserId.ToString() == user.Id && a.CheckedInTime.Value.Date == today)
+                        .Select(a => new AttendanceReportViewModel
+                        {
+                            CheckedInTime = (DateTime)a.CheckedInTime,
+                            CheckedOutTime = a.CheckedoutTime,
+                            CheckedInImage = a.CheckedinImage,
+                            CheckedOutImage = a.CheckedoutImage,
+                            WorkingHours = a.CheckedoutTime != null
+                                ? ((a.CheckedoutTime.Value - a.CheckedInTime.Value) - TimeSpan.FromMinutes(45)).TotalHours
+                                : (double?)null
+                        })
+                        .ToList()
                 })
                 .ToList();
 
             return View(todayData);
+            //        var today = DateTime.Today;
+
+            //        var todayData = _context.tblAttendances
+            //            .Where(a => a.CheckedInTime.Value.Date == today)
+            //            .Select(a => new
+            //            {
+            //                a.UserId,
+            //                a.CheckedInTime,
+            //                a.CheckedoutTime,
+            //                a.CheckedinImage,
+            //                a.CheckedoutImage,
+            //                UserName = _context.Users
+            //                    .Where(u => u.Id == a.UserId.ToString())
+            //                    .Select(u => u.FullName)
+            //                    .FirstOrDefault()
+            //            })
+            //            .AsEnumerable()
+            //            .GroupBy(a => new { a.UserId, a.UserName })
+            //            .Select(g => new TodayAttendanceViewModel
+            //            {
+            //                UserId = g.Key.UserId,
+            //                UserName = g.Key.UserName,
+            //                AttendanceHistory = g.Select(x => new AttendanceReportViewModel
+            //                {
+            //                    CheckedInTime = (DateTime)x.CheckedInTime,
+            //                    CheckedOutTime = x.CheckedoutTime,
+            //                    CheckedInImage = x.CheckedinImage,
+            //                    CheckedOutImage = x.CheckedoutImage,
+            //                    WorkingHours = x.CheckedoutTime != null
+            //? ((x.CheckedoutTime.Value - x.CheckedInTime.Value) - TimeSpan.FromMinutes(45)).TotalHours : (double?)null
+            //                }).ToList()
+            //            })
+            //            .ToList();
+
+            //        return View(todayData);
         }
         public IActionResult UserAttendance(Guid userId)
         {
@@ -127,9 +152,9 @@ namespace LeaveManagement.Controllers
             var today = DateTime.Now;
             var month = today.Month;
             var salaryList = await _context.SalaryReports
-    .Where(l => l.Month <= month && l.IsPaid == false)
-    .Include(l => l.User)
-    .ToListAsync();
+             .Where(l => l.Month <= month && l.IsPaid == false)
+             .Include(l => l.User)
+             .ToListAsync();
             return View(salaryList);
 
         }
@@ -585,11 +610,22 @@ namespace LeaveManagement.Controllers
 
             foreach (var employee in employees)
             {
-                bool exists = await _context.SalaryReports
-                    .AnyAsync(s => s.UserId == employee.Id && s.Month == currentMonth && s.Year == currentYear);
+                var exists = await _context.SalaryReports
+                    .FirstOrDefaultAsync(s => s.UserId == employee.Id && s.Month == currentMonth && s.Year == currentYear);
 
-                if (exists)
-                    continue;
+                if (exists != null)
+                {
+                   
+                    if (exists.BaseSalary == employee.BaseSalary)
+                    {
+                        continue;
+                    }
+                    else
+                    {
+                        // Salary update  → remove old report so new one will be generated
+                        _context.SalaryReports.Remove(exists);
+                    }
+                }
 
                 var joiningDay = employee.JoiningDate.Month == currentMonth && employee.JoiningDate.Year == currentYear
                     ? employee.JoiningDate.Day

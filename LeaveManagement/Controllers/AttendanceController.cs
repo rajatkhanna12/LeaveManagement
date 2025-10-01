@@ -23,26 +23,29 @@ namespace LeaveManagement.Controllers
             }
 
             var today = DateTime.Today;
+            var startOfMonth = new DateTime(today.Year, today.Month, 1);
+            var endOfMonth = startOfMonth.AddMonths(1).AddDays(-1);
             var attendance = _context.tblAttendances
                 .FirstOrDefault(a => a.UserId == userId && a.CreatedDate.Date == today);
 
             ViewBag.HasCheckedIn = attendance != null;
-            ViewBag.HasCheckedOut = attendance != null && attendance.CheckedoutTime != null;
+              ViewBag.HasCheckedOut = attendance != null && attendance.CheckedoutTime != null;
 
 
-            var report = _context.tblAttendances.Where(a => a.UserId == userId)
-    .OrderByDescending(a => a.CheckedInTime)
-    .Select(a => new AttendanceReportViewModel
-    {
+            var report = _context.tblAttendances.Where(a => a.UserId == userId && a.CreatedDate >= startOfMonth
+                 && a.CreatedDate <= endOfMonth)
+            .OrderByDescending(a => a.CheckedInTime)
+            .Select(a => new AttendanceReportViewModel
+            {
 
-        CheckedInTime = a.CheckedInTime.Value, // force unwrap
-        CheckedOutTime = a.CheckedoutTime,
-        CheckedInImage = a.CheckedinImage,
-        CheckedOutImage = a.CheckedoutImage,
-        WorkingHours = a.CheckedoutTime != null
-    ? ((a.CheckedoutTime.Value - a.CheckedInTime.Value) - TimeSpan.FromMinutes(45)).TotalHours: (double?)null
-    })
-    .ToList();
+                CheckedInTime = a.CheckedInTime.Value, // force unwrap
+                CheckedOutTime = a.CheckedoutTime,
+                CheckedInImage = a.CheckedinImage,
+                CheckedOutImage = a.CheckedoutImage,
+                WorkingHours = a.CheckedoutTime != null
+            ? ((a.CheckedoutTime.Value - a.CheckedInTime.Value) - TimeSpan.FromMinutes(45)).TotalHours : (double?)null
+            })
+            .ToList();
 
 
             return View(report);

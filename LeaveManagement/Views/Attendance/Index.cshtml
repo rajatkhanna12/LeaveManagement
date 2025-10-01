@@ -64,31 +64,26 @@
                     <tr>
                         <td>@item.CheckedInTime.ToString("dd-MMM-yyyy hh:mm tt")</td>
                         <td>@(item.CheckedOutTime.HasValue ? item.CheckedOutTime.Value.ToString("dd-MMM-yyyy hh:mm tt") : "-")</td>
-                        
+
                         <td>
-                                @(string.IsNullOrEmpty(item.CheckedInImage)
-                                    ? "-"
-                                    : Html.Raw($"<img src='{item.CheckedInImage}' width='80' alt='Check In' />"))
+                            @(string.IsNullOrEmpty(item.CheckedInImage)
+                                ? "-"
+                                : Html.Raw($"<img src='{item.CheckedInImage}' width='80' loading='lazy' alt='Check In' />"))
                         </td>
 
 
                         <td>
-                                    @(string.IsNullOrEmpty(item.CheckedOutImage)
-                                        ? "-"
-                                        : Html.Raw($"<img src='{item.CheckedOutImage}' width='80' alt='Check In' />"))
+                            @(string.IsNullOrEmpty(item.CheckedOutImage)
+                                ? "-"
+                                : Html.Raw($"<img src='{item.CheckedOutImage}' width='80' loading='lazy' alt='Check In' />"))
                         </td>
 
-                 
+
                         <td>@(item.WorkingHours.HasValue ? $"{item.WorkingHours.Value:F2} hrs" : "-")</td>
                     </tr>
                 }
             }
-            else
-            {
-                @* <tr>
-                    <td colspan="5" class="text-center">No attendance records found.</td>
-                </tr> *@
-            }
+
         </tbody>
     </table>
 </div>
@@ -96,27 +91,29 @@
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
 
 
-@section Scripts{
+@section Scripts {
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 
     <script>
            $(document).ready(function () {
-        if ($('#attendanceTable').length) {
-            $('#attendanceTable').DataTable({
-                "order": [[0, "desc"]],
-                "columnDefs": [
-                    { "orderable": false, "targets": [2, 3] } // images not sortable
-                ]
-            });
-        }
+                if ($('#attendanceTable').length) {
+                    $('#attendanceTable').DataTable({
+                        "order": [[0, "desc"]],
+                        "columnDefs": [
+                            { "orderable": false, "targets": [2, 3] } // images not sortable
+                        ],
+                        "deferRender": true,  // 🚀 only render visible rows initially
+                        "pageLength": 10
+                    });
+                }
 
 
 
 
-         let cameraAllowed = false;
-        let video = document.getElementById("video");
+            let cameraAllowed = false;
+            let video = document.getElementById("video");
 
                 // Start camera
                 function startCamera() {
@@ -174,4 +171,4 @@
 
     </script>
 }
-   
+
