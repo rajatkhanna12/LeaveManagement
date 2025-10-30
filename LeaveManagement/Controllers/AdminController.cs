@@ -41,11 +41,32 @@ namespace LeaveManagement.Controllers
         }
 
         public async Task<IActionResult> Index()
-        {
+            {
             await SetUserInfoAsync();
             var employees = await _userManager.GetUsersInRoleAsync("Employee");
+            var today = DateTime.Today;
+
+            // 🎂 Employees having Birthday today
+            var birthdayEmployees = employees
+                .Where(e => e.DateOfBirth.Day == today.Day &&
+                            e.DateOfBirth.Month == today.Month)
+                .ToList();
+
+            // 🎊 Employees having Work Anniversary today
+            var anniversaryEmployees = employees
+      .Where(e => e.JoiningDate.Month == today.Month &&
+                  e.JoiningDate.Day == today.Day)
+      .Select(e => new
+      {
+          e.FullName,
+          e.JoiningDate
+      })
+      .ToList();
+
+            ViewBag.BirthdayEmployees = birthdayEmployees;
+            ViewBag.AnniversaryEmployees = anniversaryEmployees;
             return View(employees.AsEnumerable());
-        }
+                }
 
         public IActionResult TodayAttendanceReport()
         {
@@ -325,6 +346,7 @@ namespace LeaveManagement.Controllers
                 user.BaseSalary = baseSalary;
                 user.Role = model.Role;
                 user.IsActive = model.IsActive;
+                user.DateOfBirth = model.DateOfBirth;
 
                 var result = await _userManager.UpdateAsync(user);
                 if (result.Succeeded)

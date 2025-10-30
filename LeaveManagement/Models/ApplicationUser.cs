@@ -13,7 +13,8 @@ namespace LeaveManagement.Models
         public string FullName { get; set; }
         [Required]
         public DateTime JoiningDate { get; set; }
-
+        [Required]
+        public DateTime DateOfBirth { get; set; }
         [NotMapped]
 
         public decimal BaseSalary

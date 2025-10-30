@@ -1,18 +1,189 @@
 ﻿@model IEnumerable<ApplicationUser>
 
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Manager Dashboard";
     Layout = "~/Views/Shared/_ManagerLayout.cshtml";
 }
-<head>
-   
-</head>
-<h1>Index</h1>
 
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<div class="card">
+<style>
+    .notification-card {
+        border: none;
+        border-radius: 14px;
+        overflow: hidden;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+    }
+
+        .notification-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+        }
+
+    .notification-header {
+        padding: 14px 20px;
+        color: #fff;
+        font-weight: 600;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .notification-body {
+        background: #fff;
+        padding: 18px 22px;
+    }
+
+        .notification-body ul {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        .notification-body li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #f1f1f1;
+        }
+
+            .notification-body li:last-child {
+                border-bottom: none;
+            }
+
+    .notif-title {
+        font-weight: 600;
+        font-size: 16px;
+        color: #333;
+    }
+
+    .notif-subtitle {
+        font-size: 13px;
+        color: #6c757d;
+    }
+
+    .badge-custom {
+        font-size: 12px;
+        padding: 6px 12px;
+        border-radius: 15px;
+        font-weight: 500;
+    }
+
+    .birthday-bg {
+        background: linear-gradient(45deg, #00c851, #35d07f);
+    }
+
+    .anniversary-bg {
+        background: linear-gradient(45deg, #00bcd4, #2196f3);
+    }
+
+    .positive-msg {
+        font-size: 14px;
+        font-weight: 500;
+        margin-top: 8px;
+        color: #555;
+    }
+
+    @@media (max-width: 768px) {
+        .notification-card {
+            margin-bottom: 15px;
+        }
+    }
+</style>
+
+<div class="container mt-4">
+    <div class="text-center mb-4">
+        <h3 class="fw-bold text-primary">👋 Welcome, Manager!</h3>
+        <p class="text-muted">Here’s what’s happening with your team today.</p>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-12 col-md-10 col-sm-12">
+
+            <!-- 🎂 Birthday Notification -->
+            @if (ViewBag.BirthdayEmployees != null && ((IEnumerable<dynamic>)ViewBag.BirthdayEmployees).Any())
+            {
+                <div class="notification-card mb-4">
+                    <div class="notification-header birthday-bg">
+                        <span>🎂 Team Birthdays Today</span>
+                        <span class="badge bg-light text-success fw-bold">
+                            @(((IEnumerable<dynamic>)ViewBag.BirthdayEmployees).Count()) 🎉
+                        </span>
+                    </div>
+                    <div class="notification-body">
+                        <ul>
+                            @foreach (var emp in ViewBag.BirthdayEmployees)
+                            {
+                                <li>
+                                    <div>
+                                        <div class="notif-title">@emp.FullName</div>
+                                        <div class="notif-subtitle">@emp.Email</div>
+                                    </div>
+                                    <span class="badge-custom bg-light text-success">Happy Birthday 🎈</span>
+                                </li>
+                            }
+                        </ul>
+                        <div class="positive-msg">
+                            🎉 Wishing our wonderful team members celebrating today a fantastic birthday!
+                            May your day bring happiness, growth, and new energy to achieve even greater things ahead.
+                            — From Management 💚
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <!-- 🎊 Work Anniversary Notification -->
+            @if (ViewBag.AnniversaryEmployees != null && ((IEnumerable<dynamic>)ViewBag.AnniversaryEmployees).Any())
+            {
+                <div class="notification-card mb-4">
+                    <div class="notification-header anniversary-bg">
+                        <span>🎊 Work Anniversaries Today</span>
+                        <span class="badge bg-light text-info fw-bold">
+                            @(((IEnumerable<dynamic>)ViewBag.AnniversaryEmployees).Count()) 🎉
+                        </span>
+                    </div>
+                    <div class="notification-body">
+                        <ul>
+                            @foreach (var emp in ViewBag.AnniversaryEmployees)
+                            {
+                                var years = DateTime.Today.Year - emp.JoiningDate.Year;
+                                <li>
+                                    <div>
+                                        <div class="notif-title">@emp.FullName</div>
+                                        <div class="notif-subtitle">@years year(s) completed</div>
+                                    </div>
+                                    <span class="badge-custom bg-light text-info">Congratulations 🎊</span>
+                                </li>
+                            }
+                        </ul>
+                        <div class="positive-msg">
+                            💼 Congratulations to our team members marking another milestone today!
+                            Your dedication and consistency make a real impact.
+                            Thank you for being a valued part of our journey — cheers to many more achievements ahead! 🌟
+                            — From Management 🙌
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <!-- 📨 No Notifications -->
+            @if (((ViewBag.BirthdayEmployees == null || !((IEnumerable<dynamic>)ViewBag.BirthdayEmployees).Any()) &&
+            (ViewBag.AnniversaryEmployees == null || !((IEnumerable<dynamic>)ViewBag.AnniversaryEmployees).Any())))
+            {
+                <div class="text-center p-4 bg-light rounded shadow-sm">
+                    <h6 class="text-muted">No celebrations today 📭</h6>
+                    <p class="text-secondary mt-2">
+                        But let’s keep the spirit high — every day brings progress and teamwork! 💪😊
+                    </p>
+                </div>
+            }
+
+        </div>
+    </div>
+</div>
+
+<!-- Employee List -->
+<div class="card mt-4">
     <h5 class="card-header">Employee List</h5>
     <div class="table-responsive text-nowrap">
         <table id="employeeTable" class="table table-hover">
@@ -22,7 +193,7 @@
                     <th>Email</th>
                     <th>Joining Date</th>
                     <th>Status</th>
-                    <th>SalaryDetial</th>
+                    <th>Salary Detail</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -42,7 +213,7 @@
                             </span>
                         </td>
                         <td>
-                            <a  asp-action="SalaryDetail" asp-route-id="@employee.Id" class="btn btn-sm btn-outline-secondary">SalarySlip</a>
+                            <a asp-action="SalaryDetail" asp-route-id="@employee.Id" class="btn btn-sm btn-outline-secondary">Salary Slip</a>
                         </td>
                         <td>
                             <div class="dropdown">
@@ -53,11 +224,12 @@
                                     <a class="dropdown-item" href="@Url.Action("Edit", new { id = employee.Id })">
                                         <i class="bx bx-edit-alt me-1"></i> Edit
                                     </a>
-                                    <a class="dropdown-item" href="@Url.Action("Delete", new { id = employee.Id })" onclick="return confirm('Are you sure to delete this user?')">
+                                    <a class="dropdown-item" href="@Url.Action("Delete", new { id = employee.Id })"
+                                       onclick="return confirm('Are you sure to delete this user?')">
                                         <i class="bx bx-trash me-1"></i> Delete
                                     </a>
                                     <a class="dropdown-item" href="@Url.Action("LeaveByUser", new { id = employee.Id })">
-                                        <i class="bx bx-trash me-1"></i> Leave Detail
+                                        <i class="bx bx-calendar me-1"></i> Leave Detail
                                     </a>
                                 </div>
                             </div>
@@ -68,6 +240,7 @@
         </table>
     </div>
 </div>
+
 <script>
     $(document).ready(function () {
         $('#employeeTable').DataTable({
