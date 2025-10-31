@@ -182,9 +182,15 @@
     </div>
 </div>
 
+
+
 <!-- Employee List -->
 <div class="card mt-4">
-    <h5 class="card-header">Employee List</h5>
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Employee List</h5>
+        <a asp-action="Create" class="btn btn-primary btn-sm">Create New</a>
+    </div>
+ 
     <div class="table-responsive text-nowrap">
         <table id="employeeTable" class="table table-hover">
             <thead>

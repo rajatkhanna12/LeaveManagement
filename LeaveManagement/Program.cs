@@ -1,3 +1,4 @@
+using LeaveManagement;
 using LeaveManagement.Models;
 using LeaveManagement.SeedData;
 using LeaveManagement.VM;
@@ -17,6 +18,10 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 })
 .AddEntityFrameworkStores<LeaveDbContext>()
 .AddDefaultTokenProviders();
+builder.Services.AddHostedService<DailyEmailScheduler>();
+builder.Services.AddScoped< EmailService>();
+
+
 builder.Services.ConfigureApplicationCookie(options =>
 {
    

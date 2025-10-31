@@ -21,15 +21,16 @@ namespace LeaveManagement.Controllers
         private readonly IRazorViewEngine _viewEngine;
         private readonly ITempDataProvider _tempDataProvider;
         private readonly IServiceProvider _serviceProvider;
+        private readonly EmailService _emailService;
 
-        public EmployeeController(LeaveDbContext context, UserManager<ApplicationUser> userManager, IRazorViewEngine viewEngine, ITempDataProvider tempDataProvider, IServiceProvider serviceProvider)
+        public EmployeeController(LeaveDbContext context, UserManager<ApplicationUser> userManager, IRazorViewEngine viewEngine, ITempDataProvider tempDataProvider, IServiceProvider serviceProvider, EmailService emailService)
         {
             _context = context;
             _userManager = userManager;
             _viewEngine = viewEngine;
             _tempDataProvider = tempDataProvider;
             _serviceProvider = serviceProvider;
-
+            _emailService = emailService;
         }
         // Logged In user
         private async Task SetUserInfoAsync()
@@ -104,10 +105,112 @@ namespace LeaveManagement.Controllers
 
             _context.LeaveRequests.Add(model);
             await _context.SaveChangesAsync();
+            try
+            {
 
+                var leaveTypeName = await _context.LeaveTypes
+                   .Where(l => l.Id == model.LeaveTypeId)
+                   .Select(l => l.Name)
+                   .FirstOrDefaultAsync();
+
+                model.LeaveType = new LeaveType { Name = leaveTypeName };
+                string managerEmail = "rajatkhanna.netdeveloper@gmail.com"; // Can be fetched dynamically
+                await SendLeaveRequestEmailAsync(user, model, managerEmail);
+                Console.WriteLine($"📧 Leave request email sent to {managerEmail}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Failed to send manager email: {ex.Message}");
+            }
             TempData["Success"] = "Leave request submitted successfully!";
             return RedirectToAction("MyLeaves");
         }
+
+        private async Task SendLeaveRequestEmailAsync(ApplicationUser user, LeaveRequest model, string managerEmail)
+        {
+            string subject = $"📝 New Leave Request from {user.FullName}";
+
+            string body = $@"
+                                <html>
+                                <head>
+                                    <style>
+                                        body {{
+                                            font-family: 'Segoe UI', sans-serif;
+                                            background-color: #f8f9fa;
+                                            margin: 0;
+                                            padding: 0;
+                                        }}
+                                        .email-container {{
+                                            max-width: 600px;
+                                            margin: 30px auto;
+                                            background-color: #ffffff;
+                                            border-radius: 10px;
+                                            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+                                            padding: 20px 30px;
+                                        }}
+                                        .header {{
+                                            background-color: #007bff;
+                                            color: white;
+                                            padding: 12px 20px;
+                                            border-radius: 8px 8px 0 0;
+                                            text-align: center;
+                                            font-size: 20px;
+                                            font-weight: 600;
+                                        }}
+                                        .content {{
+                                            margin: 20px 0;
+                                            color: #333333;
+                                            line-height: 1.6;
+                                        }}
+                                        .content strong {{
+                                            color: #007bff;
+                                        }}
+                                        .footer {{
+                                            text-align: center;
+                                            font-size: 12px;
+                                            color: #999999;
+                                            margin-top: 25px;
+                                            border-top: 1px solid #eaeaea;
+                                            padding-top: 10px;
+                                        }}
+                                        .highlight {{
+                                            background-color: #f1f8ff;
+                                            border-left: 4px solid #007bff;
+                                            padding: 8px 12px;
+                                            margin: 10px 0;
+                                            border-radius: 4px;
+                                        }}
+                                    </style>
+                                </head>
+                                <body>
+                                    <div class='email-container'>
+                                        <div class='header'>New Leave Request Submitted</div>
+                                        <div class='content'>
+                                            <p>Hello <strong>Manager</strong>,</p>
+                                            <p>A new leave request has been submitted by <strong>{user.FullName}</strong> (<a href='mailto:{user.Email}'>{user.Email}</a>).</p>
+
+                                            <div class='highlight'>
+                                                <p><strong>Leave Type:</strong> {model.LeaveType.Name}</p>
+                                                <p><strong>Duration:</strong> {model.StartDate:dd MMM yyyy} - {model.EndDate:dd MMM yyyy}</p>
+                                                <p><strong>Reason:</strong> {model.Reason}</p>
+                                                <p><strong>Status:</strong> Pending</p>
+                                            </div>
+
+                                            <p>
+                                                Please review and approve/reject the request in the Business Box panel.
+                                            </p>
+                                        </div>
+                                        <div class='footer'>
+                                            <p>This is an automated message from <strong>Business Box Leave Management System</strong>.</p>
+                                        </div>
+                                    </div>
+                                </body>
+                                </html>
+                                ";
+
+            await _emailService.SendEmailAsync(managerEmail, subject, body);
+        }
+
 
         [HttpGet]
         public async Task<IActionResult> MyLeaveSummary()
