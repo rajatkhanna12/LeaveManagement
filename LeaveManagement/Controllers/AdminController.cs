@@ -214,7 +214,8 @@ namespace LeaveManagement.Controllers
                 string body = GetManagerReminderTemplate(birthdayEmployees, anniversaryEmployees, tomorrow);
 
                 // 📧 Send mail to manager
-                await _emailService.SendEmailAsync("rajatkhanna.netdeveloper@gmail.com", subject, body);
+               await _emailService.SendEmailAsync("rajatkhanna.netdeveloper@gmail.com", subject, body);
+              //  await _emailService.SendEmailAsync("amandhiman.businessBox@gmail.com", subject, body);
             }
         }
 
@@ -1008,7 +1009,8 @@ namespace LeaveManagement.Controllers
         }
         private async Task SendNoLeaveBalanceEmailAsync(ApplicationUser user)
         {
-            string managerEmail = "rajatkhanna.netdeveloper@gmail.com"; // 📩 static manager email
+           string managerEmail = "rajatkhanna.netdeveloper@gmail.com"; // 📩 static manager email
+           // string managerEmail = "amandhiman.businessBox@gmail.com"; // 📩 static manager email
 
             // --------------------------------------------------
             // 🧍‍♀️ Employee Email Template
@@ -1202,6 +1204,69 @@ namespace LeaveManagement.Controllers
 
             Console.WriteLine($"📧 Leave balance alert sent to Employee ({user.Email}) and Manager ({managerEmail})");
         }
+        public async Task NotifyManagerAboutEmployeesOnLeaveAsync()
+        {
+            var today = DateTime.UtcNow.Date;
+           // string managerEmail = "amandhiman.businessbox@gmail.com"; // ✅ static manager email
+            string managerEmail = "rajatkhanna.netdeveloper@gmail.com"; // ✅ static manager email
+
+            // Get all employees on approved leave for today
+            var leavesToday = await _context.LeaveRequests
+                .Where(l => l.Status == LeaveStatus.Approved &&
+                            l.StartDate.Date <= today &&
+                            l.EndDate.Date >= today)
+                .Include(l => l.User)
+                .ToListAsync();
+
+            if (!leavesToday.Any())
+            {
+                
+                return;
+            }
+
+            // Prepare email content
+            var message = new StringBuilder();
+            message.AppendLine("<h3>Employees on Leave Today:</h3>");
+            message.AppendLine("<table border='1' cellspacing='0' cellpadding='6' style='border-collapse:collapse;width:100%;'>");
+            message.AppendLine("<thead style='background-color:#f2f2f2;'>");
+            message.AppendLine("<tr>");
+            message.AppendLine("<th align='left'>Employee Name</th>");
+            message.AppendLine("<th align='left'>Start Date</th>");
+            message.AppendLine("<th align='left'>End Date</th>");
+            message.AppendLine("<th align='left'>Type</th>");
+            message.AppendLine("<th align='left'>Reason</th>");
+            message.AppendLine("</tr>");
+            message.AppendLine("</thead>");
+            message.AppendLine("<tbody>");
+
+            foreach (var leave in leavesToday)
+            {
+                string empName = $"{leave.User.FullName}";
+                string start = leave.StartDate.ToString("dd MMM yyyy");
+                string end = leave.EndDate.ToString("dd MMM yyyy");
+                string type = leave.IsHalfDay ? "Half Day" : "Full Day";
+                string reason = string.IsNullOrWhiteSpace(leave.Reason) ? "N/A" : leave.Reason;
+
+                message.AppendLine("<tr>");
+                message.AppendLine($"<td>{empName}</td>");
+                message.AppendLine($"<td>{start}</td>");
+                message.AppendLine($"<td>{end}</td>");
+                message.AppendLine($"<td>{type}</td>");
+                message.AppendLine($"<td>{reason}</td>");
+                message.AppendLine("</tr>");
+            }
+
+            message.AppendLine("</tbody>");
+            message.AppendLine("</table>");
+            message.AppendLine($"<p><strong>Date:</strong> {today:dd MMM yyyy}</p>");
+            message.AppendLine("<p>Regards,<br><strong>Leave Management System</strong></p>");
+
+            // Send email
+            await _emailService.SendEmailAsync(managerEmail, "Today's Leave Report", message.ToString());
+
+            
+        }
+
 
 
 

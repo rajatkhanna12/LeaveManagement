@@ -1,11 +1,29 @@
-using LeaveManagement;
+﻿using LeaveManagement;
 using LeaveManagement.Models;
 using LeaveManagement.SeedData;
 using LeaveManagement.VM;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Serilog; // ✅ Add this
 
 var builder = WebApplication.CreateBuilder(args);
+
+
+//
+// ✅ 1. Configure Serilog for console + file logging
+//
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Information()
+
+    .WriteTo.File(
+        "Logs/log-.txt",                // folder path (auto-created)
+        rollingInterval: RollingInterval.Day, // new file daily
+        retainedFileCountLimit: 10,          // keep 10 most recent logs
+        shared: true)
+    .CreateLogger();
+
+builder.Host.UseSerilog(); // use Serilog as logging provider
+
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
