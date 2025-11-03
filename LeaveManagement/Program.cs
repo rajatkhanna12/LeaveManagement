@@ -1,4 +1,6 @@
-﻿using LeaveManagement;
+﻿using Hangfire;
+using LeaveManagement;
+using LeaveManagement.Jobs;
 using LeaveManagement.Models;
 using LeaveManagement.SeedData;
 using LeaveManagement.VM;
@@ -36,8 +38,15 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 })
 .AddEntityFrameworkStores<LeaveDbContext>()
 .AddDefaultTokenProviders();
-builder.Services.AddHostedService<DailyEmailScheduler>();
+
 builder.Services.AddScoped< EmailService>();
+
+// ✅ Add Hangfire
+builder.Services.AddHangfire(config =>
+{
+    config.UseSqlServerStorage(builder.Configuration.GetConnectionString("DefaultConnection"));
+});
+builder.Services.AddHangfireServer();
 
 
 builder.Services.ConfigureApplicationCookie(options =>
@@ -71,6 +80,30 @@ app.UseStaticFiles();
 app.UseRouting();
 
 app.UseAuthorization();
+
+
+//
+// ✅ 5. Hangfire dashboard (optional but recommended)
+//
+app.UseHangfireDashboard("/hangfire");
+
+//
+// ✅ 6. Schedule recurring job (9:00 AM IST daily)
+//
+RecurringJob.AddOrUpdate<DailyEmailJob>(
+    "daily-email-job",
+    job => job.RunAsync(),
+    "30 3 * * *", // 9:00 AM IST (UTC +5:30)
+    TimeZoneInfo.FindSystemTimeZoneById("India Standard Time")
+);
+// ✅ Testing: run job every 1 minute
+//RecurringJob.AddOrUpdate<DailyEmailJob>(
+//    "daily-email-job",
+//    job => job.RunAsync(),
+//    Cron.Minutely(),
+//    TimeZoneInfo.FindSystemTimeZoneById("India Standard Time")
+//);
+
 
 app.MapControllerRoute(
     name: "default",

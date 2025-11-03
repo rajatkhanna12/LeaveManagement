@@ -215,7 +215,7 @@ namespace LeaveManagement.Controllers
 
                 // 📧 Send mail to manager
                await _emailService.SendEmailAsync("rajatkhanna.netdeveloper@gmail.com", subject, body);
-              //  await _emailService.SendEmailAsync("amandhiman.businessBox@gmail.com", subject, body);
+               // await _emailService.SendEmailAsync("amandhiman.businessBox@gmail.com", subject, body);
             }
         }
 
@@ -1009,8 +1009,8 @@ namespace LeaveManagement.Controllers
         }
         private async Task SendNoLeaveBalanceEmailAsync(ApplicationUser user)
         {
-           string managerEmail = "rajatkhanna.netdeveloper@gmail.com"; // 📩 static manager email
-           // string managerEmail = "amandhiman.businessBox@gmail.com"; // 📩 static manager email
+          string managerEmail = "rajatkhanna.netdeveloper@gmail.com"; // 📩 static manager email
+           //string managerEmail = "amandhiman.businessBox@gmail.com"; // 📩 static manager email
 
             // --------------------------------------------------
             // 🧍‍♀️ Employee Email Template
@@ -1207,7 +1207,7 @@ namespace LeaveManagement.Controllers
         public async Task NotifyManagerAboutEmployeesOnLeaveAsync()
         {
             var today = DateTime.UtcNow.Date;
-           // string managerEmail = "amandhiman.businessbox@gmail.com"; // ✅ static manager email
+          //  string managerEmail = "amandhiman.businessbox@gmail.com"; // ✅ static manager email
             string managerEmail = "rajatkhanna.netdeveloper@gmail.com"; // ✅ static manager email
 
             // Get all employees on approved leave for today
