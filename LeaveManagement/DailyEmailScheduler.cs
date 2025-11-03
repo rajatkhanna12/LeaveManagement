@@ -31,7 +31,7 @@ namespace LeaveManagement
                         // Convert UTC → IST
                         var indiaTimeZone = TimeZoneInfo.FindSystemTimeZoneById("India Standard Time");
                         var now = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, indiaTimeZone);
-                    var nextRun = /*new DateTime(now.Year, now.Month, now.Day, 9, 0, 0);*/ now.AddSeconds(15);
+                    var nextRun = new DateTime(now.Year, now.Month, now.Day, 9, 0, 0);
 
                     // If it's already past 9 AM today, schedule for tomorrow
                     if (now >= nextRun)
