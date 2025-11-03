@@ -85,7 +85,13 @@ app.UseAuthorization();
 //
 // ✅ 5. Hangfire dashboard (optional but recommended)
 //
-app.UseHangfireDashboard("/hangfire");
+app.UseHangfireDashboard("/hangfire", new DashboardOptions
+{
+    Authorization = new[]
+    {
+        new BasicAuthAuthorizationFilter("test@123.com", "admin")
+    }
+});
 
 //
 // ✅ 6. Schedule recurring job (9:00 AM IST daily)
