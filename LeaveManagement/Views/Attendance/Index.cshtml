@@ -19,7 +19,6 @@
     <canvas id="canvas" width="320" height="240" style="display:none;"></canvas>
 
     <div class="d-flex align-items-center gap-2">
-
         <!-- Check In -->
         <form asp-action="CheckIn" method="post">
             <input type="hidden" name="imageData" id="checkinImageData" />
@@ -71,104 +70,139 @@
                                 : Html.Raw($"<img src='{item.CheckedInImage}' width='80' loading='lazy' alt='Check In' />"))
                         </td>
 
-
                         <td>
                             @(string.IsNullOrEmpty(item.CheckedOutImage)
                                 ? "-"
-                                : Html.Raw($"<img src='{item.CheckedOutImage}' width='80' loading='lazy' alt='Check In' />"))
+                                : Html.Raw($"<img src='{item.CheckedOutImage}' width='80' loading='lazy' alt='Check Out' />"))
                         </td>
-
 
                         <td>@(item.WorkingHours.HasValue ? $"{item.WorkingHours.Value:F2} hrs" : "-")</td>
                     </tr>
                 }
             }
-
         </tbody>
     </table>
 </div>
 
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
 
-
 @section Scripts {
-
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 
     <script>
-           $(document).ready(function () {
-                if ($('#attendanceTable').length) {
-                    $('#attendanceTable').DataTable({
-                        "order": [[0, "desc"]],
-                        "columnDefs": [
-                            { "orderable": false, "targets": [2, 3] } // images not sortable
-                        ],
-                        "deferRender": true,  // 🚀 only render visible rows initially
-                        "pageLength": 10
-                    });
-                }
+        $(document).ready(function () {
+            // --- ✅ DataTable init ---
+            if ($('#attendanceTable').length) {
+                $('#attendanceTable').DataTable({
+                    order: [[0, "desc"]],
+                    columnDefs: [{ orderable: false, targets: [2, 3] }],
+                    deferRender: true,
+                    pageLength: 10
+                });
+            }
 
-
-
-
-            let cameraAllowed = false;
+            // --- ✅ Camera Setup (with permission check) ---
             let video = document.getElementById("video");
+            let canvas = document.getElementById("canvas");
+            let context = canvas.getContext("2d");
+            let cameraAllowed = false;
+            let currentStream = null;
 
-                // Start camera
-                function startCamera() {
-                    navigator.mediaDevices.getUserMedia({ video: true })
-                        .then(function (stream) {
-                            video.srcObject = stream;
-                            cameraAllowed = true;
-                            video.play();
-                        })
-                        .catch(function (err) {
-                            cameraAllowed = false;
-                            alert("Camera access is required!");
-                            console.error(err);
-                        });
+            async function startCamera() {
+                try {
+                    currentStream = await navigator.mediaDevices.getUserMedia({ video: true });
+                    video.srcObject = currentStream;
+                    cameraAllowed = true;
+                    await video.play();
+                    console.log("🎥 Camera started successfully");
+                } catch (err) {
+                    console.error("Camera error:", err);
+                    alert("Camera access is required for attendance capture.");
+                }
+            }
+
+            async function initCamera() {
+                try {
+                    const permissions = await navigator.permissions.query({ name: "camera" });
+
+                    if (permissions.state === "granted") {
+                        console.log("✅ Camera permission already granted.");
+                        await startCamera();
+                    } else if (permissions.state === "prompt") {
+                        console.log("⚠️ Requesting camera permission...");
+                        await startCamera();
+                    } else {
+                        console.warn("🚫 Camera permission denied previously.");
+                        alert("Please enable camera permission from your browser settings.");
+                    }
+
+                    permissions.onchange = () => {
+                        console.log("🔄 Camera permission changed:", permissions.state);
+                        if (permissions.state === "granted" && !cameraAllowed) {
+                            startCamera();
+                        }
+                    };
+                } catch (err) {
+                    console.warn("Permissions API not supported — fallback to direct request.");
+                    await startCamera();
+                }
+            }
+
+            initCamera();
+
+            // --- ✅ Capture Image Fast & Compress ---
+            function captureCompressedImage() {
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                return canvas.toDataURL("image/jpeg", 0.5); // compress 50%
+            }
+
+            // --- ✅ Loader Overlay ---
+            function showLoader(btn, text) {
+                const originalText = btn.text();
+                btn.data("original-text", originalText);
+                btn.prop("disabled", true).text(text + "...");
+            }
+
+            function hideLoader(btn) {
+                btn.prop("disabled", false).text(btn.data("original-text"));
+            }
+
+            // --- ✅ Generic handler for both buttons ---
+            async function handleAttendance(btn, hiddenFieldId, formSelector, confirmText) {
+                if (!cameraAllowed) {
+                    alert("Please allow camera access before proceeding!");
+                    return;
                 }
 
-                startCamera();
+                if (confirmText && !confirm(confirmText)) return;
 
-                // Capture photo & submit form
-                function captureAndSend(hiddenFieldId, form) {
-                    const canvas = document.getElementById("canvas");
-                    const context = canvas.getContext('2d');
+                showLoader(btn, "Processing");
 
-                    context.drawImage(video, 0, 0, canvas.width, canvas.height);
-                    const imageData = canvas.toDataURL('image/png');
-                    document.getElementById(hiddenFieldId).value = imageData;
+                await new Promise(resolve => setTimeout(resolve, 200)); // smoother UI
+                const imageData = captureCompressedImage();
+                document.getElementById(hiddenFieldId).value = imageData;
 
-                    form.submit();
+                formSelector.submit();
+            }
+
+            // --- ✅ Event Handlers ---
+            $("#checkInBtn").on("click", async function () {
+                const btn = $(this);
+                await handleAttendance(btn, "checkinImageData", btn.closest("form")[0]);
+            });
+
+            $("#checkOutBtn").on("click", async function () {
+                const btn = $(this);
+                await handleAttendance(btn, "checkoutImageData", btn.closest("form")[0], "Are you sure you want to check out?");
+            });
+
+            // --- ✅ Optional: Stop camera on page unload (to save resources) ---
+            window.addEventListener("beforeunload", () => {
+                if (currentStream) {
+                    currentStream.getTracks().forEach(track => track.stop());
                 }
-
-                // Check In button
-                $("#checkInBtn").on("click", function () {
-                    if (!cameraAllowed) {
-                        alert("Please allow camera access before checking in!");
-                        return;
-                    }
-                      $(this).prop("disabled", true);
-                    captureAndSend('checkinImageData', $(this).closest('form')[0]);
-                });
-
-                // Check Out button
-                $("#checkOutBtn").on("click", function () {
-                    if (!cameraAllowed) {
-                        alert("Please allow camera access before checking out!");
-                        return;
-                    }
-                    if (!confirm("Are you sure you want to check out?")) {
-                        return;
-                    }
-                    captureAndSend('checkoutImageData', $(this).closest('form')[0]);
-                });
-           });
-
-
-
+            });
+        });
     </script>
 }
-

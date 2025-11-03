@@ -9,48 +9,49 @@ namespace LeaveManagement.Controllers
     public class AttendanceController : Controller
     {
         private readonly LeaveDbContext _context;
-        public AttendanceController(LeaveDbContext context)
+        private readonly IWebHostEnvironment _env;
+
+        public AttendanceController(LeaveDbContext context, IWebHostEnvironment env)
         {
             _context = context;
+            _env = env;
         }
+
         public IActionResult Index()
         {
             var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out Guid userId))
             {
-                TempData["Message"] = " You must be logged in to check in!";
-                return RedirectToAction("Index");
+                TempData["Message"] = "You must be logged in to check in!";
+                return RedirectToAction("Login", "Account");
             }
 
             var today = DateTime.Today;
             var startOfMonth = new DateTime(today.Year, today.Month, 1);
             var endOfMonth = startOfMonth.AddMonths(1).AddDays(-1);
-            var attendance = _context.tblAttendances
-                .FirstOrDefault(a => a.UserId == userId && a.CreatedDate.Date == today);
 
-            ViewBag.HasCheckedIn = attendance != null;
-              ViewBag.HasCheckedOut = attendance != null && attendance.CheckedoutTime != null;
+            var attendanceToday = _context.tblAttendances
+                .FirstOrDefault(a => a.UserId == userId && a.CheckedInTime.HasValue && a.CheckedInTime.Value.Date == today);
 
+            ViewBag.HasCheckedIn = attendanceToday != null;
+            ViewBag.HasCheckedOut = attendanceToday != null && attendanceToday.CheckedoutTime != null;
 
-            var report = _context.tblAttendances.Where(a => a.UserId == userId && a.CreatedDate >= startOfMonth
-                 && a.CreatedDate <= endOfMonth)
-            .OrderByDescending(a => a.CheckedInTime)
-            .Select(a => new AttendanceReportViewModel
-            {
-
-                CheckedInTime = a.CheckedInTime.Value, // force unwrap
-                CheckedOutTime = a.CheckedoutTime,
-                CheckedInImage = a.CheckedinImage,
-                CheckedOutImage = a.CheckedoutImage,
-                WorkingHours = a.CheckedoutTime != null
-            ? ((a.CheckedoutTime.Value - a.CheckedInTime.Value) - TimeSpan.FromMinutes(45)).TotalHours : (double?)null
-            })
-            .ToList();
-
+            var report = _context.tblAttendances
+                .Where(a => a.UserId == userId && a.CreatedDate >= startOfMonth && a.CreatedDate <= endOfMonth)
+                .OrderByDescending(a => a.CheckedInTime)
+                .Select(a => new AttendanceReportViewModel
+                {
+                    CheckedInTime = a.CheckedInTime.Value,
+                    CheckedOutTime = a.CheckedoutTime,
+                    CheckedInImage = a.CheckedinImage,
+                    CheckedOutImage = a.CheckedoutImage,
+                    WorkingHours = a.CheckedoutTime != null
+                        ? ((a.CheckedoutTime.Value - a.CheckedInTime.Value) - TimeSpan.FromMinutes(45)).TotalHours
+                        : (double?)null
+                })
+                .ToList();
 
             return View(report);
-
-
         }
 
         [HttpPost]
@@ -62,16 +63,19 @@ namespace LeaveManagement.Controllers
                 TempData["Message"] = "You must be logged in to check in!";
                 return RedirectToAction("Index");
             }
-            string imagePath = SaveBase64Image(imageData, "CheckedIn");
+
             var today = DateTime.Today;
             var alreadyCheckedIn = await _context.tblAttendances
-                .AnyAsync(a => a.UserId == userId && a.CheckedInTime == today);
+                .AnyAsync(a => a.UserId == userId && a.CheckedInTime.HasValue && a.CheckedInTime.Value.Date == today);
 
             if (alreadyCheckedIn)
             {
                 TempData["Message"] = "You have already checked in today!";
                 return RedirectToAction("Index");
             }
+
+            string imagePath = SaveBase64Image(imageData, "CheckedIn");
+
             var attendance = new TblAttendance
             {
                 UserId = userId,
@@ -83,7 +87,7 @@ namespace LeaveManagement.Controllers
             _context.tblAttendances.Add(attendance);
             await _context.SaveChangesAsync();
 
-            TempData["Message"] = " You’ve successfully checked in! Wishing you a productive and positive day ahead 🚀";
+            TempData["Message"] = " You’ve successfully checked in! Wishing you a productive and positive day ahead ";
             return RedirectToAction("Index");
         }
 
@@ -93,27 +97,29 @@ namespace LeaveManagement.Controllers
             var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out Guid userId))
             {
-                TempData["Message"] = "You must be logged in to check in!";
+                TempData["Message"] = "You must be logged in to check out!";
                 return RedirectToAction("Index");
             }
-            string imagePath = SaveBase64Image(imageData, "CheckedOut");
 
-            var attendance = _context.tblAttendances
-                .FirstOrDefault(a => a.UserId == userId && a.CheckedoutTime == null);
+            var today = DateTime.Today;
+            var attendance = await _context.tblAttendances
+                .FirstOrDefaultAsync(a => a.UserId == userId && a.CheckedInTime.HasValue &&
+                                          a.CheckedInTime.Value.Date == today && a.CheckedoutTime == null);
 
-            if (attendance != null)
-            {
-                attendance.CheckedoutTime = DateTime.Now;
-                attendance.CheckedoutImage = imagePath;
-                await _context.SaveChangesAsync();
-                TempData["Message"] = " Checked out! Hope you had a productive day. See you tomorrow!";
-
-            }
-            else
+            if (attendance == null)
             {
                 TempData["Message"] = "No check-in record found for today.";
+                return RedirectToAction("Index");
             }
 
+            string imagePath = SaveBase64Image(imageData, "CheckedOut");
+
+            attendance.CheckedoutTime = DateTime.Now;
+            attendance.CheckedoutImage = imagePath;
+
+            await _context.SaveChangesAsync();
+
+            TempData["Message"] = "Checked out! Hope you had a productive day. See you tomorrow!";
             return RedirectToAction("Index");
         }
 
@@ -122,21 +128,35 @@ namespace LeaveManagement.Controllers
             if (string.IsNullOrEmpty(base64String))
                 return null;
 
+            try
+            {
+                // 🧩 Handle "data:image/jpeg;base64," or "data:image/png;base64,"
+                var base64Data = base64String;
+                if (base64Data.Contains(","))
+                    base64Data = base64Data.Split(',')[1];
 
-            var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "Attendance", type);
-            if (!Directory.Exists(uploadsFolder))
-                Directory.CreateDirectory(uploadsFolder);
+                byte[] imageBytes = Convert.FromBase64String(base64Data);
 
-            var fileName = Guid.NewGuid() + ".png";
-            var filePath = Path.Combine(uploadsFolder, fileName);
+                // 🗂️ Ensure upload directory exists
+                string uploadsFolder = Path.Combine(_env.WebRootPath, "uploads", "Attendance", type);
+                if (!Directory.Exists(uploadsFolder))
+                    Directory.CreateDirectory(uploadsFolder);
 
-            var base64Data = base64String.Replace("data:image/png;base64,", "");
-            var bytes = Convert.FromBase64String(base64Data);
-            System.IO.File.WriteAllBytes(filePath, bytes);
+                // 🧾 Generate file name
+                string fileName = $"{type}_{DateTime.Now:yyyyMMdd_HHmmss}_{Guid.NewGuid().ToString().Substring(0, 6)}.jpg";
+                string filePath = Path.Combine(uploadsFolder, fileName);
 
+                // 💾 Save image
+                System.IO.File.WriteAllBytes(filePath, imageBytes);
 
-            return $"/uploads/Attendance/{type}/{fileName}";
+                // 🌐 Return relative path (for use in <img src>)
+                return $"/uploads/Attendance/{type}/{fileName}";
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error saving base64 image: {ex.Message}");
+                return null;
+            }
         }
-
     }
 }
