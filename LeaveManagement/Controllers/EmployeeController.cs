@@ -53,7 +53,14 @@ namespace LeaveManagement.Controllers
             ViewBag.UserRole = "Unknown";
         }
 
+        public IActionResult Dashboard()
+        {
+            // This sets the page title for the layout condition
+            ViewData["Title"] = "Dashboard";
 
+            // You can load dynamic data later (like stats, pending leaves, etc.)
+            return View();
+        }
         [HttpGet]
         public async Task<IActionResult> ApplyLeave()
         {
@@ -114,7 +121,8 @@ namespace LeaveManagement.Controllers
                    .FirstOrDefaultAsync();
 
                 model.LeaveType = new LeaveType { Name = leaveTypeName };
-                string managerEmail = "rajatkhanna.netdeveloper@gmail.com"; // Can be fetched dynamically
+               // string managerEmail = "rajatkhanna.netdeveloper@gmail.com"; // Can be fetched dynamically
+                string managerEmail = "amandhiman.businessbox@gmail.com"; // Can be fetched dynamically
                 await SendLeaveRequestEmailAsync(user, model, managerEmail);
                 Console.WriteLine($"📧 Leave request email sent to {managerEmail}");
             }
@@ -122,8 +130,9 @@ namespace LeaveManagement.Controllers
             {
                 Console.WriteLine($"❌ Failed to send manager email: {ex.Message}");
             }
-            TempData["Success"] = "Leave request submitted successfully!";
-            return RedirectToAction("MyLeaves");
+            TempData["Success"] = "Leave submitted! Check your email or LMP for the latest status.";
+
+            return RedirectToAction("ApplyLeave");
         }
 
         private async Task SendLeaveRequestEmailAsync(ApplicationUser user, LeaveRequest model, string managerEmail)

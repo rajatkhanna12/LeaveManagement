@@ -1,73 +1,141 @@
 ﻿@model LeaveManagement.Models.LeaveRequest
 @{
     Layout = "_EmployeeLayout";
-}
-
-
-@{
     ViewData["Title"] = "Apply for Leave";
     var leaveTypes = ViewBag.LeaveTypes as List<LeaveManagement.Models.LeaveType>;
 }
-<div class="card">
-    <div class="container mt-5">
-        <h2 class="mb-4">Apply for Leave</h2>
+
+<div class="apply-leave-container">
+    <div class="form-card shadow-sm p-4">
+        <div class="header mb-4 text-center">
+            <h3 class="fw-bold text-gradient mb-1">
+                <i class="bi bi-calendar-plus me-2"></i>Apply for Leave
+            </h3>
+            <p class="text-muted small mb-0">Submit your leave request easily</p>
+        </div>
 
         @if (TempData["Success"] != null)
         {
-            <div class="alert alert-success">@TempData["Success"]</div>
+            <div class="alert alert-success text-center rounded-pill shadow-sm">@TempData["Success"]</div>
         }
 
         <form asp-action="ApplyLeave" method="post" class="row g-3">
             <div asp-validation-summary="All" class="text-danger"></div>
 
             <div class="col-md-6">
-                <label asp-for="LeaveTypeId" class="form-label">Leave Type</label>
-                <select asp-for="LeaveTypeId" class="form-select" required>
+                <label asp-for="LeaveTypeId" class="form-label fw-semibold">Leave Type</label>
+                <select asp-for="LeaveTypeId" class="form-select form-control-modern" required>
                     <option value="">-- Select Leave Type --</option>
                     @foreach (var leaveType in leaveTypes)
                     {
                         <option value="@leaveType.Id">@leaveType.Name</option>
                     }
                 </select>
-                <span asp-validation-for="LeaveTypeId" class="text-danger"></span>
+                <span asp-validation-for="LeaveTypeId" class="text-danger small"></span>
             </div>
 
             <div class="col-md-6">
-                <label asp-for="IsHalfDay" class="form-label">Is Half Day?</label>
-                <select asp-for="IsHalfDay" class="form-select" required>
+                <label asp-for="IsHalfDay" class="form-label fw-semibold">Is Half Day?</label>
+                <select asp-for="IsHalfDay" class="form-select form-control-modern" required>
                     <option value="false">No</option>
                     <option value="true">Yes</option>
                 </select>
-                <span asp-validation-for="IsHalfDay" class="text-danger"></span>
-            </div>
-
-
-            <div class="col-md-6">
-                <label asp-for="StartDate" class="form-label">Start Date</label>
-                <input asp-for="StartDate" class="form-control" type="date" required />
-                <span asp-validation-for="StartDate" class="text-danger"></span>
+                <span asp-validation-for="IsHalfDay" class="text-danger small"></span>
             </div>
 
             <div class="col-md-6">
-                <label asp-for="EndDate" class="form-label">End Date</label>
-                <input asp-for="EndDate" class="form-control" type="date" required />
-                <span asp-validation-for="EndDate" class="text-danger"></span>
+                <label asp-for="StartDate" class="form-label fw-semibold">Start Date</label>
+                <input asp-for="StartDate" class="form-control form-control-modern" type="date" required />
+                <span asp-validation-for="StartDate" class="text-danger small"></span>
+            </div>
+
+            <div class="col-md-6">
+                <label asp-for="EndDate" class="form-label fw-semibold">End Date</label>
+                <input asp-for="EndDate" class="form-control form-control-modern" type="date" required />
+                <span asp-validation-for="EndDate" class="text-danger small"></span>
             </div>
 
             <div class="col-12">
-                <label asp-for="Reason" class="form-label">Reason</label>
-                <textarea asp-for="Reason" class="form-control" rows="3" placeholder="Enter reason for leave..." required></textarea>
-                <span asp-validation-for="Reason" class="text-danger"></span>
+                <label asp-for="Reason" class="form-label fw-semibold">Reason</label>
+                <textarea asp-for="Reason" class="form-control form-control-modern" rows="3" placeholder="Enter reason for leave..." required></textarea>
+                <span asp-validation-for="Reason" class="text-danger small"></span>
             </div>
 
-            <div class="col-12" style="margin-bottom:20px">
-                <button type="submit" class="btn btn-primary mt-2">Submit</button>
-                <a asp-action="MyLeaves" class="btn btn-secondary mt-2 ms-2">Cancel</a>
+            <div class="col-12 text-center mt-3 mb-2">
+                <button type="submit" class="btn btn-gradient-primary px-5 py-2 me-2">
+                    <i class="bi bi-check2-circle me-1"></i> Submit
+                </button>
+                <a asp-action="MyLeaves" class="btn btn-outline-secondary px-4 py-2">
+                    <i class="bi bi-x-circle me-1"></i> Cancel
+                </a>
             </div>
         </form>
     </div>
 </div>
-@* @section Scripts {
-    <partial name="_ValidationScriptsPartial" />
-}
- *@
+
+<style>
+    body {
+        background: linear-gradient(135deg, #f6f8fc 0%, #e9eef5 100%);
+        font-family: 'Inter', sans-serif;
+    }
+
+    .apply-leave-container {
+        display: flex;
+        justify-content: center;
+        padding: 40px 20px;
+    }
+
+    .form-card {
+        background: #fff;
+        border-radius: 20px;
+        width: 100%;
+        max-width: 750px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    }
+
+    .header h3 {
+        background: linear-gradient(90deg, #5c6bc0, #3949ab);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .form-label {
+        color: #333;
+    }
+
+    .form-control-modern, .form-select.form-control-modern {
+        border-radius: 12px;
+        border: 1px solid #dcdfea;
+        padding: 10px 14px;
+        transition: all 0.2s ease-in-out;
+    }
+
+        .form-control-modern:focus, .form-select.form-control-modern:focus {
+            border-color: #5c6bc0;
+            box-shadow: 0 0 0 0.15rem rgba(92, 107, 192, 0.25);
+        }
+
+    textarea.form-control-modern {
+        resize: none;
+    }
+
+    .btn-gradient-primary {
+        background: linear-gradient(90deg, #5c6bc0, #3949ab);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        transition: 0.3s;
+    }
+
+        .btn-gradient-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(92,107,192,0.4);
+        }
+
+    .alert-success {
+        background: linear-gradient(90deg, #c8e6c9, #a5d6a7);
+        border: none;
+        color: #1b5e20;
+        font-weight: 500;
+    }
+</style>

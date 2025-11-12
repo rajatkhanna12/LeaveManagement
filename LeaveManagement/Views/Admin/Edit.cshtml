@@ -1,93 +1,164 @@
 ﻿@model ApplicationUser
 
-
 @{
-   
+    ViewData["Title"] = "Edit Employee";
     Layout = "~/Views/Shared/_ManagerLayout.cshtml";
 }
 
-
-
-<form asp-action="Edit" method="post">
-    <input type="hidden" asp-for="Id" />
-    <div class="content-wrapper">
-        <div class="container-xxl flex-grow-1 container-p-y">
-            <div class="row">
-                <div class="col-xl">
-                    <div class="card mb-6">
-                        <div class="card-header d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0">Edit Employee</h5>
-                            <small class="text-muted float-end">Modify employee details</small>
-                        </div>
-                        <div class="card-body">
-
-                            <div class="mb-3">
-                                <label asp-for="FullName" class="form-label"></label>
-                                <div class="input-group input-group-merge">
-                                    <span class="input-group-text"><i class="bx bx-user"></i></span>
-                                    <input asp-for="FullName" class="form-control" />
-                                </div>
-                                <span asp-validation-for="FullName" class="text-danger"></span>
-                            </div>
-
-                            <div class="mb-3">
-                                <label asp-for="Email" class="form-label"></label>
-                                <div class="input-group input-group-merge">
-                                    <span class="input-group-text"><i class="bx bx-envelope"></i></span>
-                                    <input asp-for="Email" class="form-control" />
-                                </div>
-                                <span asp-validation-for="Email" class="text-danger"></span>
-                            </div>
-
-                            <div class="mb-3">
-                                <label asp-for="PhoneNumber" class="form-label"></label>
-                                <div class="input-group input-group-merge">
-                                    <span class="input-group-text"><i class="bx bx-phone"></i></span>
-                                    <input asp-for="PhoneNumber" class="form-control" />
-                                </div>
-                                <span asp-validation-for="PhoneNumber" class="text-danger"></span>
-                            </div>
-
-                            <div class="mb-3">
-                                <label asp-for="JoiningDate" class="form-label"></label>
-                                <input asp-for="JoiningDate" class="form-control" type="date" />
-                                <span asp-validation-for="JoiningDate" class="text-danger"></span>
-                            </div>
-                            <div class="mb-3">
-                                <label asp-for="DateOfBirth" class="form-label"></label>
-                                <input asp-for="DateOfBirth" class="form-control" type="date" />
-                                <span asp-validation-for="DateOfBirth" class="text-danger"></span>
-                            </div>
-
-                            <div class="mb-3">
-                                <label asp-for="BaseSalary" class="form-label"></label>
-                                <div class="input-group input-group-merge">
-                                    <span class="input-group-text">₹</span>
-                                    <input asp-for="BaseSalary" class="form-control" />
-                                </div>
-                                <span asp-validation-for="BaseSalary" class="text-danger"></span>
-                            </div>
-
-                            <div class="mb-3">
-                                <label asp-for="Role" class="form-label">Role</label>
-                                <select asp-for="Role" class="form-select">
-                                    <option value="">Select Role</option>
-                                    <option value="Employee" selected>Employee</option>
-                                    
-                                </select>
-                                <span asp-validation-for="Role" class="text-danger"></span>
-                            </div>
-
-                            <div class="mb-3 form-check">
-                                <input asp-for="IsActive" class="form-check-input" type="checkbox" />
-                                <label asp-for="IsActive" class="form-check-label">Is Active</label>
-                            </div>
-
-                            <button type="submit" class="btn btn-primary">Update</button>
-                        </div>
-                    </div>
-                </div>
+<div class="container py-4">
+    <div class="card shadow-lg border-0 rounded-4 overflow-hidden">
+        <!-- Header -->
+        <div class="card-header bg-gradient text-white py-3 rounded-top-4"
+             style="background: linear-gradient(90deg, #667eea, #764ba2);">
+            <div class="d-flex justify-content-between align-items-center flex-wrap">
+                <h4 class="mb-0 fw-semibold">Edit Employee</h4>
+                <a asp-action="Index" class="btn btn-light fw-semibold rounded-pill px-4 mt-2 mt-md-0 shadow-sm">
+                    <i class="bx bx-left-arrow-alt me-1"></i> Back to List
+                </a>
             </div>
         </div>
+
+        <!-- Form Body -->
+        <div class="card-body p-4">
+            <form asp-action="Edit" method="post" class="needs-validation" novalidate>
+                <input type="hidden" asp-for="Id" />
+
+                <div class="row g-4">
+                    <!-- Full Name -->
+                    <div class="col-md-6">
+                        <label asp-for="FullName" class="form-label fw-semibold"></label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light"><i class="bx bx-user"></i></span>
+                            <input asp-for="FullName" class="form-control rounded-end" placeholder="John Doe" required />
+                        </div>
+                        <span asp-validation-for="FullName" class="text-danger small"></span>
+                    </div>
+
+                    <!-- Email -->
+                    <div class="col-md-6">
+                        <label asp-for="Email" class="form-label fw-semibold"></label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light"><i class="bx bx-envelope"></i></span>
+                            <input asp-for="Email" class="form-control rounded-end" placeholder="john@example.com" required />
+                        </div>
+                        <span asp-validation-for="Email" class="text-danger small"></span>
+                    </div>
+
+                    <!-- Phone -->
+                    <div class="col-md-6">
+                        <label asp-for="PhoneNumber" class="form-label fw-semibold"></label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light"><i class="bx bx-phone"></i></span>
+                            <input asp-for="PhoneNumber" class="form-control rounded-end" placeholder="123-456-7890" />
+                        </div>
+                        <span asp-validation-for="PhoneNumber" class="text-danger small"></span>
+                    </div>
+
+                    <!-- Joining Date -->
+                    <div class="col-md-6">
+                        <label asp-for="JoiningDate" class="form-label fw-semibold"></label>
+                        <input asp-for="JoiningDate" type="date" class="form-control" />
+                        <span asp-validation-for="JoiningDate" class="text-danger small"></span>
+                    </div>
+
+                    <!-- Date of Birth -->
+                    <div class="col-md-6">
+                        <label asp-for="DateOfBirth" class="form-label fw-semibold"></label>
+                        <input asp-for="DateOfBirth" type="date" class="form-control" />
+                        <span asp-validation-for="DateOfBirth" class="text-danger small"></span>
+                    </div>
+
+                    <!-- Salary -->
+                    <div class="col-md-6">
+                        <label asp-for="BaseSalary" class="form-label fw-semibold"></label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light">₹</span>
+                            <input asp-for="BaseSalary" class="form-control rounded-end" placeholder="50000" />
+                        </div>
+                        <span asp-validation-for="BaseSalary" class="text-danger small"></span>
+                    </div>
+
+                    <!-- Role -->
+                    <div class="col-md-6">
+                        <label asp-for="Role" class="form-label fw-semibold"></label>
+                        <select asp-for="Role" class="form-select">
+                            <option value="">Select Role</option>
+                            <option value="Employee">Employee</option>
+                        </select>
+                        <span asp-validation-for="Role" class="text-danger small"></span>
+                    </div>
+
+                    <!-- Is Active -->
+                    <div class="col-md-6 d-flex align-items-center mt-3">
+                        <div class="form-check form-switch">
+                            <input asp-for="IsActive" class="form-check-input" type="checkbox" role="switch" />
+                            <label asp-for="IsActive" class="form-check-label fw-semibold ms-2">Active</label>
+                        </div>
+                    </div>
+
+                    <!-- Buttons -->
+                    <div class="col-12 text-end mt-4">
+                        <button type="submit" class="btn btn-primary px-5 rounded-pill shadow-sm">
+                            <i class="bx bx-save me-1"></i> Update Employee
+                        </button>
+                        <a asp-action="Index" class="btn btn-outline-secondary px-4 rounded-pill ms-2">
+                            <i class="bx bx-x me-1"></i> Cancel
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
     </div>
-</form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+
+<style>
+    /* ✨ Page Styling */
+    .card {
+        border-radius: 18px;
+        background-color: #ffffff;
+        border: none;
+    }
+
+    .form-label {
+        color: #333;
+        font-size: 0.95rem;
+    }
+
+    .input-group-text {
+        border-radius: 10px 0 0 10px;
+    }
+
+    .form-control, .form-select {
+        border-radius: 10px;
+        border: 1px solid #ddd;
+        transition: all 0.3s ease;
+    }
+
+        .form-control:focus, .form-select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.15rem rgba(102, 126, 234, 0.25);
+        }
+
+    .btn-primary {
+        background: linear-gradient(90deg, #667eea, #764ba2);
+        border: none;
+    }
+
+        .btn-primary:hover {
+            background: linear-gradient(90deg, #5a67d8, #6b46c1);
+        }
+
+    .form-check-input:checked {
+        background-color: #667eea;
+        border-color: #667eea;
+    }
+
+    .form-check-input {
+        width: 2.5em;
+        height: 1.3em;
+    }
+</style>

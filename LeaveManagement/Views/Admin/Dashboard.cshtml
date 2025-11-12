@@ -1,0 +1,254 @@
+﻿@{
+    ViewData["Title"] = "Manager Dashboard";
+    Layout = "~/Views/Shared/_ManagerLayout.cshtml";
+}
+
+<style>
+    /* ===== Modern Notification Card Styling ===== */
+    .notification-card {
+        border: none;
+        border-radius: 18px;
+        overflow: hidden;
+        background: #fff;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+        transition: all 0.3s ease;
+    }
+
+        .notification-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+        }
+
+    .notification-header {
+        padding: 16px 22px;
+        color: #fff;
+        font-weight: 600;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 1rem;
+        letter-spacing: 0.3px;
+    }
+
+    .notification-body {
+        padding: 20px 25px;
+        background: #fff;
+    }
+
+        .notification-body ul {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        .notification-body li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+            .notification-body li:last-child {
+                border-bottom: none;
+            }
+
+    .notif-title {
+        font-weight: 600;
+        font-size: 1rem;
+        color: #333;
+    }
+
+    .notif-subtitle {
+        font-size: 0.85rem;
+        color: #777;
+    }
+
+    .badge-custom {
+        font-size: 0.8rem;
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-weight: 500;
+        background: #f8f9fa;
+        border: 1px solid #eee;
+    }
+
+    /* Gradient Headers */
+    .birthday-bg {
+        background: linear-gradient(135deg, #f5222d, #fad0c4);
+        animation: gradientFlow 5s ease infinite;
+        background-size: 200% 200%;
+    }
+
+    .anniversary-bg {
+        background: linear-gradient(135deg, #f5222d, #fad0c4);
+        animation: gradientFlow 5s ease infinite;
+        background-size: 200% 200%;
+    }
+
+    @@keyframes gradientFlow {
+        0% {
+            background-position: 0% 50%;
+        }
+
+        50% {
+            background-position: 100% 50%;
+        }
+
+        100% {
+            background-position: 0% 50%;
+        }
+    }
+
+    /* Positive message */
+    .positive-msg {
+        font-size: 0.9rem;
+        font-weight: 500;
+        margin-top: 15px;
+        padding: 12px 16px;
+        background: #f7f9fc;
+        border-left: 4px solid #007bff;
+        border-radius: 10px;
+        color: #555;
+        line-height: 1.6;
+    }
+
+    /* Dashboard Welcome Header */
+    .dashboard-header {
+        background: linear-gradient(135deg,#f5222d, #fad0c4);
+        color: white;
+        padding: 25px;
+        border-radius: 16px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        margin-bottom: 35px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+        .dashboard-header h3 {
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .dashboard-header p {
+            margin: 0;
+            opacity: 0.9;
+        }
+
+        .dashboard-header img {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            padding: 10px;
+        }
+
+    @@media (max-width: 768px) {
+        .dashboard-header {
+            flex-direction: column;
+            text-align: center;
+        }
+
+            .dashboard-header img {
+                margin-top: 10px;
+            }
+    }
+</style>
+
+<div class="container mt-4">
+
+    <!-- 🔥 Modern Welcome Header -->
+    <div class="dashboard-header">
+        <div>
+            <h3> Welcome back, Manager!</h3>
+            <p>Stay updated with your team's special moments today ✨</p>
+        </div>
+        <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" alt="Dashboard Illustration" />
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-10 col-md-11 col-sm-12">
+
+            <!-- 🎂 Birthday Notification -->
+            @if (ViewBag.BirthdayEmployees != null && ((IEnumerable<dynamic>)ViewBag.BirthdayEmployees).Any())
+            {
+                <div class="notification-card mb-4">
+                    <div class="notification-header birthday-bg">
+                        <span> Team Birthdays Today</span>
+                        <span class="badge bg-light text-primary fw-bold">
+                            @(((IEnumerable<dynamic>)ViewBag.BirthdayEmployees).Count()) 
+                        </span>
+                    </div>
+                    <div class="notification-body">
+                        <ul>
+                            @foreach (var emp in ViewBag.BirthdayEmployees)
+                            {
+                                <li>
+                                    <div>
+                                        <div class="notif-title">@emp.FullName</div>
+                                        <div class="notif-subtitle">@emp.Email</div>
+                                    </div>
+                                    <span class="badge-custom text-primary">Happy Birthday 🎈</span>
+                                </li>
+                            }
+                        </ul>
+                        <div class="positive-msg">
+                             Wishing our wonderful team members celebrating today a fantastic birthday!
+                            May your day bring happiness, growth, and new energy to achieve even greater things ahead.
+                            <strong>– From Management 💚</strong>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <!-- 🎊 Work Anniversary Notification -->
+            @if (ViewBag.AnniversaryEmployees != null && ((IEnumerable<dynamic>)ViewBag.AnniversaryEmployees).Any())
+            {
+                <div class="notification-card mb-4">
+                    <div class="notification-header anniversary-bg">
+                        <span> Work Anniversaries Today</span>
+                        <span class="badge bg-light text-danger fw-bold">
+                            @(((IEnumerable<dynamic>)ViewBag.AnniversaryEmployees).Count()) 
+                        </span>
+                    </div>
+                    <div class="notification-body">
+                        <ul>
+                            @foreach (var emp in ViewBag.AnniversaryEmployees)
+                            {
+                                var years = DateTime.Today.Year - emp.JoiningDate.Year;
+                                <li>
+                                    <div>
+                                        <div class="notif-title">@emp.FullName</div>
+                                        <div class="notif-subtitle">@years year(s) completed</div>
+                                    </div>
+                                    <span class="badge-custom text-danger">Congrats 🎊</span>
+                                </li>
+                            }
+                        </ul>
+                        <div class="positive-msg">
+                             Congratulations to our team members marking another milestone today!
+                            Your dedication and consistency make a real impact.
+                            <strong>– From Management 🌟</strong>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <!-- 📨 No Notifications -->
+            @if (((ViewBag.BirthdayEmployees == null || !((IEnumerable<dynamic>)ViewBag.BirthdayEmployees).Any()) &&
+            (ViewBag.AnniversaryEmployees == null || !((IEnumerable<dynamic>)ViewBag.AnniversaryEmployees).Any())))
+            {
+                <div class="text-center p-5 bg-white rounded-4 shadow-sm border">
+                    <img src="https://cdn-icons-png.flaticon.com/512/4076/4076505.png"
+                         alt="No events" style="width:80px; opacity:0.7;" class="mb-3" />
+                    <h6 class="text-muted fw-semibold">No celebrations today 📭</h6>
+                    <p class="text-secondary mt-2 mb-0">
+                        Keep up the great work — every day brings progress and teamwork! 💪😊
+                    </p>
+                </div>
+            }
+
+        </div>
+    </div>
+</div>

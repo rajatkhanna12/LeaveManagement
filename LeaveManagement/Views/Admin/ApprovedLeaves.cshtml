@@ -1,63 +1,100 @@
 ﻿@model IEnumerable<LeaveManagement.Models.LeaveRequest>
 
 @{
-    ViewData["Title"] = "Leave Requests";
+    ViewData["Title"] = "Approved Leave Requests";
     Layout = "~/Views/Shared/_ManagerLayout.cshtml";
 }
 
 <div class="content-wrapper">
     <div class="container-xxl flex-grow-1 container-p-y">
-        <div class="card">
-            <h5 class="card-header">Leave Requests</h5>
-            <div class="table-responsive text-nowrap">
-                <table class="table table-hover" id="LeaveTable">
-                    <thead>
-                        <tr>
-                            <th>Employee</th>
-                            <th>Leave Type</th>
-                            <th>Date Range</th>
-                            <th>Half Day</th>
-                            <th>Reason</th>
-                            <th>Status</th>
-                            <th>Action</th>
-                   
-                        
-                        </tr>
-                    </thead>
-                    <tbody class="table-border-bottom-0">
-                        @foreach (var item in Model)
-                        {
+
+       
+
+        <!-- Card Table -->
+        <div class="card shadow-sm border-0 rounded-4">
+            <div class="card-body">
+                <div class="table-responsive text-nowrap">
+                    <table class="table table-hover align-middle" id="LeaveTable">
+                        <thead class="table-light">
                             <tr>
-                                <td>@item.User.FullName</td>
-                                <td>@item.LeaveType.Name</td>
-                                <td>@item.StartDate.ToShortDateString() - @item.EndDate.ToShortDateString()</td>
-                                <td>@(item.IsHalfDay ? "Yes" : "No")</td>
-                                <td>@item.Reason</td>
-                                <td>
-                                    <span class="badge bg-label-@(item.Status == LeaveStatus.Approved ? "success" :
-                                                                                                                                                      item.Status == LeaveStatus.Rejected ? "danger" : "warning")">
-                                    @item.Status
-                                </span>
-                            </td>
-                            <td>
-                                <a asp-action="DeleteLeave" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">Delete</a>
-                            </td>
-                          
-                        </tr>
-                                                }
-                    </tbody>
-                </table>
+                                <th>Employee</th>
+                                <th>Leave Type</th>
+                                <th>Date Range</th>
+                                <th>Half Day</th>
+                                <th>Reason</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody class="table-border-bottom-0">
+                            @foreach (var item in Model)
+                            {
+                                <tr>
+                                    <td class="fw-semibold">
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar bg-success bg-opacity-10 text-success rounded-circle me-3 d-flex align-items-center justify-content-center" style="width:40px;height:40px;">
+                                                <i class="bi bi-person-check-fill"></i>
+                                            </div>
+                                            <span>@item.User.FullName</span>
+                                        </div>
+                                    </td>
+                                    <td>@item.LeaveType.Name</td>
+                                    <td>
+                                        <span class="badge bg-light text-dark border px-3 py-2">
+                                            @item.StartDate.ToShortDateString() - @item.EndDate.ToShortDateString()
+                                        </span>
+                                    </td>
+                                    <td>
+                                        @if (item.IsHalfDay == true)
+                                        {
+                                            <span class="badge bg-success bg-opacity-10 text-success px-3 py-2">
+                                                <i class="bi bi-check2-circle me-1"></i> Yes
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-danger bg-opacity-10 text-danger px-3 py-2">
+                                                <i class="bi bi-x-circle me-1"></i> No
+                                            </span>
+                                        }
+                                    </td>
+
+                                    <td>@item.Reason</td>
+                                    <td>
+                                        <span class="badge bg-success bg-opacity-10 text-success px-3 py-2">
+                                            <i class="bi bi-check-circle me-1"></i> @item.Status
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <a asp-action="DeleteLeave" asp-route-id="@item.Id"
+                                           class="btn btn-sm btn-outline-danger d-flex align-items-center">
+                                            <i class="bi bi-trash3 me-1"></i> Delete
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
+
     </div>
 </div>
-<script>
-    $(document).ready(function () {
-        $('#LeaveTable').DataTable({
-            "pageLength": 10,
-            "lengthChange": true,
-            "ordering": true,
-            "info": true
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('#LeaveTable').DataTable({
+                "pageLength": 10,
+                "lengthChange": true,
+                "ordering": true,
+                "info": true,
+                "language": {
+                    search: "_INPUT_",
+                    searchPlaceholder: "Search approved leaves..."
+                }
+            });
         });
-    });
-</script>
+    </script>
+}

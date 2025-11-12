@@ -1,18 +1,26 @@
 ﻿@model UserLeaveSummaryViewModel
-
 @{
     ViewData["Title"] = "Leave Summary";
     Layout = "~/Views/Shared/_EmployeeLayout.cshtml";
 }
 
-<div class="card">
-    <h5 class="card-header d-flex justify-content-between align-items-center">
-        <span>Leave Summary</span>
-        <span class="text-primary fw-bold">Annual Leave : 12</span>
-    </h5>
-    <div class="table-responsive text-nowrap">
-        <table class="table table-hover">
-            <thead>
+<div class="card border-0 shadow-sm p-4" style="border-radius: 16px;">
+    <div class="text-center mb-3">
+        <h4 class="fw-bold text-primary mb-2">
+            <i class="bi bi-bar-chart-line me-2"></i> Leave Summary
+        </h4>
+        <p class="text-muted mb-3">Overview of your annual leave usage</p>
+
+        <!-- ✅ Fixed Badge Position -->
+        <div class="badge text-white px-3 py-2"
+             style="background: linear-gradient(135deg, #6A5AE0, #5146D5); font-weight: 500; border-radius: 8px;">
+            Annual Leave : <span class="fw-bold">12 Days</span>
+        </div>
+    </div>
+
+    <div class="table-responsive mt-4">
+        <table class="table align-middle mb-0 shadow-sm" style="border-radius: 12px; overflow: hidden;">
+            <thead class="table-light">
                 <tr>
                     <th>Leave Type</th>
                     <th>Total Allocated</th>
@@ -20,26 +28,22 @@
                     <th>Remaining</th>
                 </tr>
             </thead>
-            <tbody class="table-border-bottom-0">
-                <tr>
-                    <td>
-                        <i class="bx bx-calendar bx-md text-info me-4"></i>
-                        <span>@Model.LeaveTypeName</span>
+            <tbody>
+                <tr class="border-bottom">
+                    <td class="fw-semibold">
+                        <i class="bi bi-calendar2-check text-info me-2 fs-5"></i>
+                        @Model.LeaveTypeName
                     </td>
-                    <td>@Model.TotalAllocated</td>
-                    <td>@Model.Used</td>
+                    <td><span class="badge bg-primary-subtle text-primary px-3 py-2 rounded-pill">@Model.TotalAllocated</span></td>
+                    <td><span class="badge bg-warning-subtle text-warning px-3 py-2 rounded-pill">@Model.Used</span></td>
                     <td>
                         @if (Model.Remaining > 0)
                         {
-                            <span class="badge bg-label-success me-1">
-                                @Model.Remaining
-                            </span>
+                            <span class="badge bg-success-subtle text-success px-3 py-2 rounded-pill">@Model.Remaining</span>
                         }
                         else
                         {
-                            <span class="badge bg-label-danger me-1">
-                                No Paid Leave available
-                            </span>
+                            <span class="badge bg-danger-subtle text-danger px-3 py-2 rounded-pill">No Paid Leave</span>
                         }
                     </td>
                 </tr>

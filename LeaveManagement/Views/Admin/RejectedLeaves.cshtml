@@ -1,16 +1,105 @@
 ﻿@model IEnumerable<LeaveManagement.Models.LeaveRequest>
 
 @{
-    ViewData["Title"] = "Leave Requests";
+    ViewData["Title"] = "Rejected Leaves";
     Layout = "~/Views/Shared/_ManagerLayout.cshtml";
 }
+
+
+
+    <style>
+        .card {
+            border-radius: 18px;
+            box-shadow: 0 8px 22px rgba(0, 0, 0, 0.08);
+            border: none;
+            overflow: hidden;
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: #fff;
+            font-weight: 600;
+            padding: 1rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+            .card-header h5 {
+                margin: 0;
+                font-weight: 600;
+                font-size: 1.2rem;
+            }
+
+        .btn-back {
+            background-color: rgba(255, 255, 255, 0.15);
+            border: none;
+            color: #fff;
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+            .btn-back:hover {
+                background-color: rgba(255, 255, 255, 0.25);
+            }
+
+        .table {
+            border-collapse: separate !important;
+            border-spacing: 0 10px !important;
+        }
+
+            .table thead th {
+                background-color: #f3f4f6;
+                color: #333;
+                border: none;
+                font-weight: 600;
+            }
+
+            .table tbody tr {
+                background-color: #fff;
+                border-radius: 12px;
+                transition: all 0.3s ease;
+            }
+
+                .table tbody tr:hover {
+                    transform: scale(1.01);
+                    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+                }
+
+            .table td, .table th {
+                vertical-align: middle;
+                border: none;
+            }
+
+        .badge {
+            padding: 0.55em 0.85em;
+            font-size: 0.85rem;
+            border-radius: 8px;
+        }
+
+        .dataTables_wrapper .dataTables_filter input {
+            border-radius: 8px;
+            padding: 6px 12px;
+            border: 1px solid #ddd;
+        }
+
+        .dataTables_wrapper .dataTables_length select {
+            border-radius: 8px;
+            padding: 5px;
+        }
+    </style>
+
 
 <div class="content-wrapper">
     <div class="container-xxl flex-grow-1 container-p-y">
         <div class="card">
-            <h5 class="card-header">Leave Requests</h5>
-            <div class="table-responsive text-nowrap">
-                <table class="table table-hover" id="Rejectedleave">
+          
+
+            <!-- Table -->
+            <div class="table-responsive p-3">
+                <table class="table align-middle" id="Rejectedleave">
                     <thead>
                         <tr>
                             <th>Employee</th>
@@ -18,11 +107,10 @@
                             <th>Date Range</th>
                             <th>Half Day</th>
                             <th>Reason</th>
-                              <th>Status</th>
-
+                            <th>Status</th>
                         </tr>
                     </thead>
-                    <tbody class="table-border-bottom-0">
+                    <tbody>
                         @foreach (var item in Model)
                         {
                             <tr>
@@ -32,27 +120,33 @@
                                 <td>@(item.IsHalfDay ? "Yes" : "No")</td>
                                 <td>@item.Reason</td>
                                 <td>
-                                    <span class="badge bg-label-@(item.Status == LeaveStatus.Approved ? "success" :
-                                                                                                                                                                                                item.Status == LeaveStatus.Rejected ? "danger" : "warning")">
-                                    @item.Status
-                                </span>
-                            </td>
-
+                                    <span class="badge bg-danger">
+                                        <i class="bi bi-x-circle me-1"></i> @item.Status
+                                    </span>
+                                </td>
                             </tr>
-                                                }
+                        }
                     </tbody>
                 </table>
             </div>
         </div>
     </div>
 </div>
-<script>
-      $(document).ready(function () {
-        $('#Rejectedleave').DataTable({
-            "pageLength": 10,
-            "lengthChange": true,
-            "ordering": true,
-            "info": true
+
+@section Scripts {
+ 
+    <script>
+        $(document).ready(function () {
+            $('#Rejectedleave').DataTable({
+                "pageLength": 10,
+                "lengthChange": true,
+                "ordering": true,
+                "info": true,
+                "language": {
+                    "search": "_INPUT_",
+                    "searchPlaceholder": "Search rejected leaves..."
+                }
+            });
         });
-    });
-</script>
+    </script>
+}

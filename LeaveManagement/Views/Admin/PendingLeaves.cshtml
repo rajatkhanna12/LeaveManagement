@@ -5,13 +5,56 @@
     Layout = "~/Views/Shared/_ManagerLayout.cshtml";
 }
 
+
+
+<style>
+    .card {
+        border-radius: 16px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    table.dataTable {
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    th {
+        background: #f4f5fa;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .btn-action {
+        border-radius: 8px;
+        transition: 0.3s;
+    }
+
+        .btn-action:hover {
+            transform: scale(1.05);
+        }
+
+    .badge {
+        font-size: 0.85rem;
+        padding: 6px 10px;
+        border-radius: 8px;
+    }
+
+    .table-responsive {
+        border-radius: 12px;
+        overflow: hidden;
+    }
+</style>
+
+
 <div class="content-wrapper">
     <div class="container-xxl flex-grow-1 container-p-y">
-        <div class="card">
-            <h5 class="card-header">Leave Requests</h5>
+
+
+
+        <div class="card p-3">
             <div class="table-responsive text-nowrap">
-                <table class="table table-hover" id="PendingLeave">
-                    <thead>
+                <table id="PendingLeave" class="table table-hover align-middle mb-0">
+                    <thead class="bg-light">
                         <tr>
                             <th>Employee</th>
                             <th>Leave Type</th>
@@ -19,10 +62,10 @@
                             <th>Half Day</th>
                             <th>Reason</th>
                             <th>Status</th>
-                            <th>Actions</th>
+                            <th class="text-center">Actions</th>
                         </tr>
                     </thead>
-                    <tbody class="table-border-bottom-0">
+                    <tbody>
                         @foreach (var item in Model)
                         {
                             <tr>
@@ -32,30 +75,46 @@
                                 <td>@(item.IsHalfDay ? "Yes" : "No")</td>
                                 <td>@item.Reason</td>
                                 <td>
-                                    <span class="badge bg-label-@(item.Status == LeaveStatus.Approved ? "success" :
-                                                                                                            item.Status == LeaveStatus.Rejected ? "danger" : "warning")">
-                                    @item.Status
-                                </span>
-                            </td>
-                            <td>
-                                <a asp-action="UpdateLeaveStatus" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">Update</a>
-                                <a asp-action="DeleteLeave" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">Delete</a>
-                            </td>
-                        </tr>
-                                                }
+                                    <span class="badge bg-@(item.Status == LeaveStatus.Approved ? "success" :
+                                                            item.Status == LeaveStatus.Rejected ? "danger" : "warning")">
+                                        @item.Status
+                                    </span>
+                                </td>
+                                <td class="text-center">
+                                    <div class="d-flex justify-content-center gap-2">
+                                        <a asp-action="UpdateLeaveStatus" asp-route-id="@item.Id" class="btn btn-sm btn-outline-success btn-action">
+                                            <i class="bi bi-pencil-square me-1"></i> Update
+                                        </a>
+                                        <a asp-action="DeleteLeave" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger btn-action">
+                                            <i class="bi bi-trash3 me-1"></i> Delete
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
                     </tbody>
                 </table>
             </div>
         </div>
+
     </div>
 </div>
-<script>
-    $(document).ready(function () {
-        $('#PendingLeave').DataTable({
-            "pageLength": 10,
-            "lengthChange": true,
-            "ordering": true,
-            "info": true
+
+@section Scripts {
+
+
+    <script>
+        $(document).ready(function () {
+            $('#PendingLeave').DataTable({
+                pageLength: 10,
+                lengthChange: true,
+                ordering: true,
+                info: true,
+                language: {
+                    search: "_INPUT_",
+                    searchPlaceholder: "Search leaves..."
+                }
+            });
         });
-    });
-</script>
+    </script>
+}

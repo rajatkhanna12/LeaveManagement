@@ -1,259 +1,179 @@
 ﻿@model IEnumerable<ApplicationUser>
 
 @{
-    ViewData["Title"] = "Manager Dashboard";
+    ViewData["Title"] = "Employee Directory";
     Layout = "~/Views/Shared/_ManagerLayout.cshtml";
 }
 
-<style>
-    .notification-card {
-        border: none;
-        border-radius: 14px;
-        overflow: hidden;
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-        transition: all 0.3s ease;
-    }
+<div class="container-fluid py-4">
+    <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+        <!-- Header -->
+        <div class="card-header bg-white border-0 py-3 d-flex flex-wrap justify-content-between align-items-center">
+            <div>
+        
+                <p class="text-muted mb-0"><strong>View and manage all employees in your organisation</strong></p>
+            </div>
+            <a asp-action="Create" class="btn btn-light fw-semibold rounded-pill px-4 mt-2 mt-md-0 shadow-sm">
+                <i class="bi bi-person-plus me-2"></i> Add Employee
+            </a>
+        </div>
 
-        .notification-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
-        }
-
-    .notification-header {
-        padding: 14px 20px;
-        color: #fff;
-        font-weight: 600;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .notification-body {
-        background: #fff;
-        padding: 18px 22px;
-    }
-
-        .notification-body ul {
-            margin: 0;
-            padding: 0;
-            list-style: none;
-        }
-
-        .notification-body li {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 0;
-            border-bottom: 1px solid #f1f1f1;
-        }
-
-            .notification-body li:last-child {
-                border-bottom: none;
-            }
-
-    .notif-title {
-        font-weight: 600;
-        font-size: 16px;
-        color: #333;
-    }
-
-    .notif-subtitle {
-        font-size: 13px;
-        color: #6c757d;
-    }
-
-    .badge-custom {
-        font-size: 12px;
-        padding: 6px 12px;
-        border-radius: 15px;
-        font-weight: 500;
-    }
-
-    .birthday-bg {
-        background: linear-gradient(45deg, #00c851, #35d07f);
-    }
-
-    .anniversary-bg {
-        background: linear-gradient(45deg, #00bcd4, #2196f3);
-    }
-
-    .positive-msg {
-        font-size: 14px;
-        font-weight: 500;
-        margin-top: 8px;
-        color: #555;
-    }
-
-    @@media (max-width: 768px) {
-        .notification-card {
-            margin-bottom: 15px;
-        }
-    }
-</style>
-
-<div class="container mt-4">
-    <div class="text-center mb-4">
-        <h3 class="fw-bold text-primary">👋 Welcome, Manager!</h3>
-        <p class="text-muted">Here’s what’s happening with your team today.</p>
-    </div>
-
-    <div class="row justify-content-center">
-        <div class="col-lg-12 col-md-10 col-sm-12">
-
-            <!-- 🎂 Birthday Notification -->
-            @if (ViewBag.BirthdayEmployees != null && ((IEnumerable<dynamic>)ViewBag.BirthdayEmployees).Any())
-            {
-                <div class="notification-card mb-4">
-                    <div class="notification-header birthday-bg">
-                        <span>🎂 Team Birthdays Today</span>
-                        <span class="badge bg-light text-success fw-bold">
-                            @(((IEnumerable<dynamic>)ViewBag.BirthdayEmployees).Count()) 🎉
-                        </span>
-                    </div>
-                    <div class="notification-body">
-                        <ul>
-                            @foreach (var emp in ViewBag.BirthdayEmployees)
-                            {
-                                <li>
-                                    <div>
-                                        <div class="notif-title">@emp.FullName</div>
-                                        <div class="notif-subtitle">@emp.Email</div>
+        <!-- Table -->
+        <div class="card-body p-3 p-md-4">
+            <div class="table-responsive">
+                <table id="employeeTable" class="table table-hover align-middle w-100">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Name</th>
+      
+                            <th>Joining Date</th>
+                            <th>Status</th>
+                            <th>Salary Detail</th>
+                            <th class="text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var employee in Model)
+                        {
+                            <tr>
+                                <td class="d-flex align-items-center">
+                                    <div class="avatar me-3">
+                                        <i class="bi bi-person-circle text-primary fs-3"></i>
                                     </div>
-                                    <span class="badge-custom bg-light text-success">Happy Birthday 🎈</span>
-                                </li>
-                            }
-                        </ul>
-                        <div class="positive-msg">
-                            🎉 Wishing our wonderful team members celebrating today a fantastic birthday!
-                            May your day bring happiness, growth, and new energy to achieve even greater things ahead.
-                            — From Management 💚
-                        </div>
-                    </div>
-                </div>
-            }
-
-            <!-- 🎊 Work Anniversary Notification -->
-            @if (ViewBag.AnniversaryEmployees != null && ((IEnumerable<dynamic>)ViewBag.AnniversaryEmployees).Any())
-            {
-                <div class="notification-card mb-4">
-                    <div class="notification-header anniversary-bg">
-                        <span>🎊 Work Anniversaries Today</span>
-                        <span class="badge bg-light text-info fw-bold">
-                            @(((IEnumerable<dynamic>)ViewBag.AnniversaryEmployees).Count()) 🎉
-                        </span>
-                    </div>
-                    <div class="notification-body">
-                        <ul>
-                            @foreach (var emp in ViewBag.AnniversaryEmployees)
-                            {
-                                var years = DateTime.Today.Year - emp.JoiningDate.Year;
-                                <li>
                                     <div>
-                                        <div class="notif-title">@emp.FullName</div>
-                                        <div class="notif-subtitle">@years year(s) completed</div>
+                                        <span class="fw-semibold text-dark">@employee.FullName</span><br />
+                                        <small class="text-muted">@employee.Email</small>
                                     </div>
-                                    <span class="badge-custom bg-light text-info">Congratulations 🎊</span>
-                                </li>
-                            }
-                        </ul>
-                        <div class="positive-msg">
-                            💼 Congratulations to our team members marking another milestone today!
-                            Your dedication and consistency make a real impact.
-                            Thank you for being a valued part of our journey — cheers to many more achievements ahead! 🌟
-                            — From Management 🙌
-                        </div>
-                    </div>
-                </div>
-            }
-
-            <!-- 📨 No Notifications -->
-            @if (((ViewBag.BirthdayEmployees == null || !((IEnumerable<dynamic>)ViewBag.BirthdayEmployees).Any()) &&
-            (ViewBag.AnniversaryEmployees == null || !((IEnumerable<dynamic>)ViewBag.AnniversaryEmployees).Any())))
-            {
-                <div class="text-center p-4 bg-light rounded shadow-sm">
-                    <h6 class="text-muted">No celebrations today 📭</h6>
-                    <p class="text-secondary mt-2">
-                        But let’s keep the spirit high — every day brings progress and teamwork! 💪😊
-                    </p>
-                </div>
-            }
-
+                                </td>
+                    
+                                <td>@employee.JoiningDate.ToString("dd MMM yyyy")</td>
+                                <td>
+                                    <span class="badge rounded-pill px-3 py-2 bg-@(employee.IsActive ? "success-subtle text-success" : "danger-subtle text-danger")">
+                                        @(employee.IsActive ? "Active" : "Inactive")
+                                    </span>
+                                </td>
+                                <td>
+                                    <a asp-action="SalaryDetail" asp-route-id="@employee.Id"
+                                       class="btn btn-outline-primary btn-sm rounded-pill px-3">
+                                        <i class="bi bi-receipt me-1"></i> View Slip
+                                    </a>
+                                </td>
+                                <td class="text-center">
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-light rounded-circle" data-bs-toggle="dropdown">
+                                            <i class="bi bi-three-dots-vertical"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end shadow">
+                                            <li>
+                                                <a class="dropdown-item" href="@Url.Action("Edit", new { id = employee.Id })">
+                                                    <i class="bi bi-pencil text-primary me-2"></i>Edit
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a class="dropdown-item" href="@Url.Action("LeaveByUser", new { id = employee.Id })">
+                                                    <i class="bi bi-calendar-check text-info me-2"></i>Leave Details
+                                                </a>
+                                            </li>
+                                            <li><hr class="dropdown-divider" /></li>
+                                            <li>
+                                                <a class="dropdown-item text-danger"
+                                                   href="@Url.Action("Delete", new { id = employee.Id })"
+                                                   onclick="return confirm('Are you sure you want to delete this user?')">
+                                                    <i class="bi bi-trash me-2"></i>Delete
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>
 
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('#employeeTable').DataTable({
+                responsive: true,
+                pageLength: 8,
+                lengthChange: false,
+                ordering: true,
+                info: false,
+                language: {
+                    search: "",
+                    searchPlaceholder: "Search employees..."
+                },
+                dom: '<"d-flex flex-wrap justify-content-between align-items-center mb-3"f>t<"mt-3 d-flex justify-content-between"ip>',
+            });
 
-
-<!-- Employee List -->
-<div class="card mt-4">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">Employee List</h5>
-        <a asp-action="Create" class="btn btn-primary btn-sm">Create New</a>
-    </div>
- 
-    <div class="table-responsive text-nowrap">
-        <table id="employeeTable" class="table table-hover">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Email</th>
-                    <th>Joining Date</th>
-                    <th>Status</th>
-                    <th>Salary Detail</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody class="table-border-bottom-0">
-                @foreach (var employee in Model)
-                {
-                    <tr>
-                        <td>
-                            <i class="bx bxs-user bx-md text-primary me-4"></i>
-                            <span>@employee.FullName</span>
-                        </td>
-                        <td>@employee.Email</td>
-                        <td>@employee.JoiningDate.ToShortDateString()</td>
-                        <td>
-                            <span class="badge bg-label-@(employee.IsActive ? "success" : "danger") me-1">
-                                @(employee.IsActive ? "Active" : "Disabled")
-                            </span>
-                        </td>
-                        <td>
-                            <a asp-action="SalaryDetail" asp-route-id="@employee.Id" class="btn btn-sm btn-outline-secondary">Salary Slip</a>
-                        </td>
-                        <td>
-                            <div class="dropdown">
-                                <button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown">
-                                    <i class="bx bx-dots-vertical-rounded"></i>
-                                </button>
-                                <div class="dropdown-menu">
-                                    <a class="dropdown-item" href="@Url.Action("Edit", new { id = employee.Id })">
-                                        <i class="bx bx-edit-alt me-1"></i> Edit
-                                    </a>
-                                    <a class="dropdown-item" href="@Url.Action("Delete", new { id = employee.Id })"
-                                       onclick="return confirm('Are you sure to delete this user?')">
-                                        <i class="bx bx-trash me-1"></i> Delete
-                                    </a>
-                                    <a class="dropdown-item" href="@Url.Action("LeaveByUser", new { id = employee.Id })">
-                                        <i class="bx bx-calendar me-1"></i> Leave Detail
-                                    </a>
-                                </div>
-                            </div>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    </div>
-</div>
-
-<script>
-    $(document).ready(function () {
-        $('#employeeTable').DataTable({
-            "pageLength": 10,
-            "lengthChange": true,
-            "ordering": true,
-            "info": true
+            // Subtle hover glow
+            $('#employeeTable tbody tr').hover(
+                function () { $(this).addClass('shadow-sm table-row-hover'); },
+                function () { $(this).removeClass('shadow-sm table-row-hover'); }
+            );
         });
-    });
-</script>
+    </script>
+}
+
+<style>
+    /* 🔹 Table & Card Design */
+    .card {
+        border-radius: 18px;
+        background: #ffffffcc;
+        backdrop-filter: blur(12px);
+    }
+
+    .table {
+        border-collapse: separate;
+        border-spacing: 0 0.6rem;
+    }
+
+        .table thead th {
+            font-weight: 600;
+            color: #555;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .table tbody tr {
+            background-color: #fff;
+            transition: all 0.25s ease-in-out;
+        }
+
+   
+
+    /* 🔹 DataTable Search Box */
+    .dataTables_filter input {
+        border-radius: 25px;
+        padding: 6px 14px;
+        border: 1px solid #ddd;
+        width: 250px !important;
+    }
+
+    .dataTables_filter label {
+        font-weight: 500;
+        color: #555;
+    }
+
+    /* 🔹 Responsive Adjustments */
+    @@media (max-width: 770px) {
+        .card-header
+
+    {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .card-header .btn {
+        width: 100%;
+    }
+
+    .dataTables_filter input {
+        width: 100% !important;
+    }
+
+    }
+</style>

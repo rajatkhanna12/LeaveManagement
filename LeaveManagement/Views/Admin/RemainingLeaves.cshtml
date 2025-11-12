@@ -5,58 +5,78 @@
     Layout = "~/Views/Shared/_ManagerLayout.cshtml";
 }
 
-<div class="card">
-    <h5 class="card-header">All Employees Leave Summary</h5>
-    <div class="table-responsive text-nowrap">
-        <table class="table table-hover" id="allLeaveSummaryTable">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Email</th>
-             
-                    <th>Total Allocated</th>
-                    <th>Used</th>
-                    <th>Remaining</th>
-                </tr>
-            </thead>
-            <tbody class="table-border-bottom-0">
-                @foreach (var item in Model)
-                {
-                    <tr>
-                        <td>
-                            <i class="bx bxs-user bx-md text-primary me-4"></i>
-                            <span>@item.FullName</span>
-                        </td>
-                        <td>@item.Email</td>
-                      
-                        <td>@item.TotalAllocated</td>
-                        <td>@item.Used</td>
-                        <td>
-                            @if (item.Remaining > 0)
+<div class="content-wrapper">
+    <div class="container-xxl flex-grow-1 container-p-y">
+
+   
+
+        <!-- Card Table -->
+        <div class="card shadow-sm border-0 rounded-4">
+            <div class="card-body">
+                <div class="table-responsive text-nowrap">
+                    <table class="table table-hover align-middle" id="allLeaveSummaryTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Employee</th>
+                                <th>Email</th>
+                                <th>Total Allocated</th>
+                                <th>Used</th>
+                                <th>Remaining</th>
+                            </tr>
+                        </thead>
+                        <tbody class="table-border-bottom-0">
+                            @foreach (var item in Model)
                             {
-                                <span class="badge bg-label-success me-1">
-                                    @item.Remaining
-                                </span>
+                                <tr>
+                                    <td class="fw-semibold">
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar bg-primary bg-opacity-10 text-primary rounded-circle me-3 d-flex align-items-center justify-content-center" style="width:40px;height:40px;">
+                                                <i class="bi bi-person-fill"></i>
+                                            </div>
+                                            <span>@item.FullName</span>
+                                        </div>
+                                    </td>
+                                    <td>@item.Email</td>
+                                    <td>
+                                        <span class="badge bg-info bg-opacity-10 text-info px-3 py-2">@item.TotalAllocated</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-warning bg-opacity-10 text-warning px-3 py-2">@item.Used</span>
+                                    </td>
+                                    <td>
+                                        @if (item.Remaining > 0)
+                                        {
+                                            <span class="badge bg-success bg-opacity-10 text-success px-3 py-2">@item.Remaining</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-danger bg-opacity-10 text-danger px-3 py-2">No Paid Leave</span>
+                                        }
+                                    </td>
+                                </tr>
                             }
-                            else
-                            {
-                                <span class="badge bg-label-danger me-1">
-                                    No Paid Leave available
-                                </span>
-                            }
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
     </div>
 </div>
 
-<!-- DataTables init -->
 @section Scripts {
     <script>
         $(document).ready(function () {
-            $('#allLeaveSummaryTable').DataTable();
+            $('#allLeaveSummaryTable').DataTable({
+                "pageLength": 10,
+                "lengthChange": true,
+                "ordering": true,
+                "info": true,
+                "language": {
+                    search: "_INPUT_",
+                    searchPlaceholder: "Search employees..."
+                }
+            });
         });
     </script>
 }

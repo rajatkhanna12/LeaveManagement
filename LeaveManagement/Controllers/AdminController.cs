@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Net.Mail;
 using System.Net;
 using System.Text;
+using Microsoft.Build.Framework;
 
 namespace LeaveManagement.Controllers
 {
@@ -45,9 +46,10 @@ namespace LeaveManagement.Controllers
             ViewBag.UserRole = "Unknown";
         }
 
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Dashboard()
         {
-            await SetUserInfoAsync();
+            // This sets the page title for the layout condition
+            ViewData["Title"] = "Manager Dashboard";
             var employees = await _userManager.GetUsersInRoleAsync("Employee");
             var today = DateTime.Today;
 
@@ -70,6 +72,14 @@ namespace LeaveManagement.Controllers
 
             ViewBag.BirthdayEmployees = birthdayEmployees;
             ViewBag.AnniversaryEmployees = anniversaryEmployees;
+            return View();
+        }
+
+        public async Task<IActionResult> Index()
+        {
+            await SetUserInfoAsync();
+            var employees = await _userManager.GetUsersInRoleAsync("Employee");
+           
             return View(employees.AsEnumerable());
         }
         [HttpPost]

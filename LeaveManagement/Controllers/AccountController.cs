@@ -21,7 +21,7 @@ namespace LeaveManagement.Controllers
              var user = await _userManager.GetUserAsync(User);
             if (user != null)
             {
-                return RedirectToAction("ApplyLeave", "Employee");
+                return RedirectToAction("Dashboard", "Employee");
             }
          return View();
         }
@@ -43,11 +43,11 @@ namespace LeaveManagement.Controllers
             {
                 if (user.Role == "Employee")
                 {
-                    return RedirectToAction("ApplyLeave", "Employee");
+                    return RedirectToAction("Dashboard", "Employee");
                 }
                 else if (user.Role == "Manager")
                 {
-                    return RedirectToAction("Index", "Admin");
+                    return RedirectToAction("Dashboard", "Admin");
                 }
                 
             }

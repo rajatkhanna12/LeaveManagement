@@ -1,81 +1,128 @@
 ﻿@model LeaveManagement.Models.LeaveRequest
+
 @{
     Layout = "_ManagerLayout";
     ViewData["Title"] = "Apply for Leave";
 
     var leaveTypes = ViewBag.LeaveTypes as List<LeaveManagement.Models.LeaveType>;
-    var employees = ViewBag.Employees as List<ApplicationUser>; 
+    var employees = ViewBag.Employees as List<ApplicationUser>;
 }
 
-<div class="card">
-    <div class="container mt-5">
-        <h2 class="mb-4">Apply for Leave</h2>
-
-        <form asp-action="ApplyLeave" method="post" class="row g-3">
-            <div asp-validation-summary="All" class="text-danger"></div>
-
-            <!-- Employee selection dropdown -->
-            <div class="col-md-6">
-                <label asp-for="UserId" class="form-label">Select Employee</label>
-                <select asp-for="UserId" class="form-select" required>
-                    <option value="">-- Select Employee --</option>
-                    @foreach (var emp in employees)
-                    {
-                        <option value="@emp.Id">@emp.UserName</option> <!-- Change to emp.FullName if using ApplicationUser -->
-                    }
-                </select>
-                <span asp-validation-for="UserId" class="text-danger"></span>
+<div class="d-flex justify-content-center align-items-center py-5">
+    <div class="card shadow-lg border-0 rounded-4 p-4" style="max-width: 700px; width: 100%; background-color: #fff;">
+        <!-- Header -->
+        <div class="text-center mb-4">
+            <div class="d-inline-flex align-items-center justify-content-center bg-gradient rounded-circle p-3 mb-2"
+                 style="background: linear-gradient(90deg, #667eea, #764ba2); color: #fff;">
+                <i class="bx bx-calendar-plus fs-3"></i>
             </div>
+      
+            <p class="text-muted mb-0">Submit your leave request easily</p>
+        </div>
 
-            <!-- Leave Type -->
-            <div class="col-md-6">
-                <label asp-for="LeaveTypeId" class="form-label">Leave Type</label>
-                <select asp-for="LeaveTypeId" class="form-select" required>
-                    <option value="">-- Select Leave Type --</option>
-                    @foreach (var leaveType in leaveTypes)
-                    {
-                        <option value="@leaveType.Id">@leaveType.Name</option>
-                    }
-                </select>
-                <span asp-validation-for="LeaveTypeId" class="text-danger"></span>
-            </div>
+        <!-- Form -->
+        <form asp-action="ApplyLeave" method="post" class="needs-validation" novalidate>
+          
 
-            <!-- Is Half Day -->
-            <div class="col-md-6">
-                <label asp-for="IsHalfDay" class="form-label">Is Half Day?</label>
-                <select asp-for="IsHalfDay" class="form-select" required>
-                    <option value="false">No</option>
-                    <option value="true">Yes</option>
-                </select>
-                <span asp-validation-for="IsHalfDay" class="text-danger"></span>
-            </div>
+            <div class="row g-4">
+                <!-- Employee -->
+                <div class="col-md-6">
+                    <label asp-for="UserId" class="form-label fw-semibold">Employee</label>
+                    <select asp-for="UserId" class="form-select rounded-3 shadow-sm" required>
+                        <option value="">-- Select Employee --</option>
+                        @foreach (var emp in employees)
+                        {
+                            <option value="@emp.Id">@emp.FullName</option>
+                        }
+                    </select>
+                    <span asp-validation-for="UserId" class="text-danger small"></span>
+                </div>
 
-            <!-- Start Date -->
-            <div class="col-md-6">
-                <label asp-for="StartDate" class="form-label">Start Date</label>
-                <input asp-for="StartDate" class="form-control" type="date" required />
-                <span asp-validation-for="StartDate" class="text-danger"></span>
-            </div>
+                <!-- Leave Type -->
+                <div class="col-md-6">
+                    <label asp-for="LeaveTypeId" class="form-label fw-semibold">Leave Type</label>
+                    <select asp-for="LeaveTypeId" class="form-select rounded-3 shadow-sm" required>
+                        <option value="">-- Select Leave Type --</option>
+                        @foreach (var leaveType in leaveTypes)
+                        {
+                            <option value="@leaveType.Id">@leaveType.Name</option>
+                        }
+                    </select>
+                    <span asp-validation-for="LeaveTypeId" class="text-danger small"></span>
+                </div>
 
-            <!-- End Date -->
-            <div class="col-md-6">
-                <label asp-for="EndDate" class="form-label">End Date</label>
-                <input asp-for="EndDate" class="form-control" type="date" required />
-                <span asp-validation-for="EndDate" class="text-danger"></span>
-            </div>
+                <!-- Half Day -->
+                <div class="col-md-6">
+                    <label asp-for="IsHalfDay" class="form-label fw-semibold">Is Half Day?</label>
+                    <select asp-for="IsHalfDay" class="form-select rounded-3 shadow-sm" required>
+                        <option value="false">No</option>
+                        <option value="true">Yes</option>
+                    </select>
+                    <span asp-validation-for="IsHalfDay" class="text-danger small"></span>
+                </div>
 
-            <!-- Reason -->
-            <div class="col-12">
-                <label asp-for="Reason" class="form-label">Reason</label>
-                <textarea asp-for="Reason" class="form-control" rows="3" placeholder="Enter reason for leave..." required></textarea>
-                <span asp-validation-for="Reason" class="text-danger"></span>
-            </div>
+                <!-- Start Date -->
+                <div class="col-md-6">
+                    <label asp-for="StartDate" class="form-label fw-semibold">Start Date</label>
+                    <input asp-for="StartDate" type="date" class="form-control rounded-3 shadow-sm" required />
+                    <span asp-validation-for="StartDate" class="text-danger small"></span>
+                </div>
 
-            <!-- Buttons -->
-            <div class="col-12" style="margin-bottom:20px">
-                <button type="submit" class="btn btn-primary mt-2">Submit</button>
-                <a asp-action="Index" class="btn btn-secondary mt-2 ms-2">Cancel</a>
+                <!-- End Date -->
+                <div class="col-md-6">
+                    <label asp-for="EndDate" class="form-label fw-semibold">End Date</label>
+                    <input asp-for="EndDate" type="date" class="form-control rounded-3 shadow-sm" required />
+                    <span asp-validation-for="EndDate" class="text-danger small"></span>
+                </div>
+
+                <!-- Reason -->
+                <div class="col-12">
+                    <label asp-for="Reason" class="form-label fw-semibold">Reason</label>
+                    <textarea asp-for="Reason" class="form-control rounded-3 shadow-sm" rows="3"
+                              placeholder="Enter reason for leave..." required></textarea>
+                    <span asp-validation-for="Reason" class="text-danger small"></span>
+                </div>
+
+                <!-- Buttons -->
+                <div class="col-12 text-end mt-3">
+                    <button type="submit" class="btn btn-primary px-5 rounded-pill shadow-sm"
+                            style="background: linear-gradient(90deg, #667eea, #764ba2); border: none;">
+                        <i class="bx bx-check-circle me-1"></i> Submit
+                    </button>
+                    <a asp-action="Index" class="btn btn-outline-secondary px-4 rounded-pill ms-2">
+                        <i class="bx bx-x me-1"></i> Cancel
+                    </a>
+                </div>
             </div>
         </form>
     </div>
 </div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+
+<style>
+    body {
+        background-color: #f5f7fb;
+    }
+
+    .card {
+        transition: all 0.3s ease;
+    }
+
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+    .form-control, .form-select {
+        border: 1px solid #e0e0e0;
+        transition: all 0.3s ease;
+    }
+
+        .form-control:focus, .form-select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+</style>
