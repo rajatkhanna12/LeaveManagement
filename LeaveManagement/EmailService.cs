@@ -12,7 +12,7 @@ namespace LeaveManagement
             _config = config;
         }
 
-        public async Task SendEmailAsync(string toEmail, string subject, string htmlBody)
+        public async Task SendEmailAsync(string toEmail, string subject, string htmlBody, string ccEmail = null)
         {
             var smtpHost = _config["EmailSettings:SmtpHost"];
             var smtpPort = int.Parse(_config["EmailSettings:SmtpPort"]);
@@ -34,15 +34,20 @@ namespace LeaveManagement
                 };
 
                 mail.To.Add(toEmail);
+                // ⭐ CC Added (Manager Email)
+                if (!string.IsNullOrWhiteSpace(ccEmail))
+                {
+                    mail.CC.Add(ccEmail);
+                }
 
                 try
                 {
                     await smtp.SendMailAsync(mail);
-                    Console.WriteLine($"✅ Email sent to {toEmail}");
+                    Console.WriteLine($"Email sent to {toEmail}, CC: {ccEmail}");
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"❌ Failed to send email to {toEmail}: {ex.Message}");
+                    Console.WriteLine($"Failed to send email to {toEmail}: {ex.Message}");
                 }
             }
         }

@@ -22,23 +22,23 @@ namespace LeaveManagement.Jobs
 
                 _logger.LogInformation("📬 Running daily email job at {Time}", DateTime.Now);
 
-                // ✅ Run these daily
+                //  Run these daily
                 await controller.SendUpcomingCelebrationEmailsToMangerAsync();
                 await controller.SendCelebrationEmailsEmpAsync();
                 await controller.NotifyManagerAboutEmployeesOnLeaveAsync();
 
-                // ✅ Run this only on the 1st of each month
+                //  Run this only on the 1st of each month
                 if (DateTime.Now.Day == 1)
                 {
-                    _logger.LogInformation("📅 Running monthly leave balance check (1st of month)");
+                    _logger.LogInformation("Running monthly leave balance check (1st of month)");
                     await controller.CheckRemainingLeavesAndNotifyAsync();
                 }
 
-                _logger.LogInformation("✅ Daily email job completed successfully at {Time}", DateTime.Now);
+                _logger.LogInformation("Daily email job completed successfully at {Time}", DateTime.Now);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ Error occurred while running daily email job");
+                _logger.LogError(ex, "Error occurred while running daily email job");
             }
         }
     }

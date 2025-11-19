@@ -91,13 +91,14 @@ namespace LeaveManagement.Controllers
                             e.JoiningDate.Day == today.Day &&
                             e.JoiningDate.Month == today.Month)
                 .ToList();
-
+            string ccEmail = "rajatkhanna.netdeveloper@gmail.com";
             // 🎂 Send Birthday Emails
             foreach (var emp in birthdayEmployees)
             {
                 string subject = $"🎂 Happy Birthday, {emp.FullName}!";
                 string body = GetEmailTemplate(emp.FullName, "birthday-today");
-                await _emailService.SendEmailAsync(emp.Email, subject, body); // Send to employee
+            
+                await _emailService.SendEmailAsync(emp.Email, subject, body,ccEmail); // Send to employee
             }
 
             // 🎊 Send Anniversary Emails
@@ -105,7 +106,7 @@ namespace LeaveManagement.Controllers
             {
                 string subject = $"🎊 Happy Work Anniversary, {emp.FullName}!";
                 string body = GetEmailTemplate(emp.FullName, "anniversary-today");
-                await _emailService.SendEmailAsync(emp.Email, subject, body); // Send to employee
+                await _emailService.SendEmailAsync(emp.Email, subject, body,ccEmail); // Send to employee
             }
 
             return Ok("Today's celebration emails sent successfully!");
@@ -502,7 +503,9 @@ namespace LeaveManagement.Controllers
             ViewBag.LeaveTypes = await _context.LeaveTypes.ToListAsync();
 
             return View();
-        }
+        }   
+
+
         [HttpPost]
         public async Task<IActionResult> ApplyLeave(LeaveRequest model)
         {
@@ -545,12 +548,107 @@ namespace LeaveManagement.Controllers
 
             _context.LeaveRequests.Add(model);
             await _context.SaveChangesAsync();
-            await CreateOrUpdateSalaryReportFromLeave(model.UserId, model.StartDate, model.EndDate, model.IsHalfDay);
+            //await CreateOrUpdateSalaryReportFromLeave(model.UserId, model.StartDate, model.EndDate, model.IsHalfDay);
+            var employee = await _context.Users.FirstOrDefaultAsync(u => u.Id == model.UserId);
+            model.LeaveType = await _context.LeaveTypes.FirstOrDefaultAsync(l => l.Id == model.LeaveTypeId);
+
+            if (employee != null )
+            {
+                await SendLeaveAppliedByManagerEmailAsync(employee, model);
+            }
+
 
             TempData["Success"] = "Leave request submitted successfully!";
             return RedirectToAction("AddLeave");
         }
+        private async Task SendLeaveAppliedByManagerEmailAsync(ApplicationUser employee, LeaveRequest model)
+        {
+            string managerName = "Manager"; // static
+            string dayType = model.IsHalfDay ? "Half Day" : "Full Day";
 
+            string subject = $"✅ Leave Applied by {managerName}";
+
+            string body = $@"
+        <html>
+        <head>
+            <style>
+                body {{
+                    font-family: 'Segoe UI', sans-serif;
+                    background-color: #f8f9fa;
+                    margin: 0;
+                    padding: 0;
+                }}
+                .email-container {{
+                    max-width: 600px;
+                    margin: 30px auto;
+                    background-color: #ffffff;
+                    border-radius: 10px;
+                    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+                    padding: 20px 30px;
+                }}
+                .header {{
+                    background-color: #28a745;
+                    color: white;
+                    padding: 12px 20px;
+                    border-radius: 8px 8px 0 0;
+                    text-align: center;
+                    font-size: 20px;
+                    font-weight: 600;
+                }}
+                .content {{
+                    margin: 20px 0;
+                    color: #333333;
+                    line-height: 1.6;
+                }}
+                .content strong {{
+                    color: #28a745;
+                }}
+                .footer {{
+                    text-align: center;
+                    font-size: 12px;
+                    color: #999999;
+                    margin-top: 25px;
+                    border-top: 1px solid #eaeaea;
+                    padding-top: 10px;
+                }}
+                .highlight {{
+                    background-color: #f1fff5;
+                    border-left: 4px solid #28a745;
+                    padding: 8px 12px;
+                    margin: 10px 0;
+                    border-radius: 4px;
+                }}
+            </style>
+        </head>
+        <body>
+            <div class='email-container'>
+                <div class='header'>Leave Applied by Manager</div>
+                <div class='content'>
+                    <p>Hello <strong>{employee.FullName}</strong>,</p>
+                    <p>Your  <strong>{managerName}</strong> has applied a leave request on your behalf.</p>
+
+                    <div class='highlight'>
+                        <p><strong>Leave Type:</strong> {model.LeaveType?.Name ?? "N/A"}</p>
+                        <p><strong>Duration:</strong> {model.StartDate:dd MMM yyyy} - {model.EndDate:dd MMM yyyy}</p>
+                        <p><strong>Day Type:</strong> {dayType}</p>
+                        <p><strong>Reason:</strong> {model.Reason ?? "Not specified"}</p>
+                        <p><strong>Status:</strong> {model.Status}</p>
+                    </div>
+
+                    <p>
+                        You can review the details in your <strong>Business Box Leave Management</strong> panel.
+                    </p>
+                </div>
+                <div class='footer'>
+                    <p>This is an automated message from <strong>Business Box Leave Management System</strong>.</p>
+                </div>
+            </div>
+        </body>
+        </html>
+    ";
+
+            await _emailService.SendEmailAsync(employee.Email, subject, body);
+        }
         public async Task<IActionResult> Edit(string id)
         {
             await SetUserInfoAsync();
@@ -608,7 +706,7 @@ namespace LeaveManagement.Controllers
                 .Include(lr => lr.User)
                 .Include(lr => lr.LeaveType)
                 .Where(lr => lr.Status == LeaveStatus.Approved)
-                .OrderByDescending(lr => lr.AppliedOn)
+                .OrderByDescending(lr => lr.StartDate)               
                 .ToListAsync();
 
             return View(leaves);
@@ -664,7 +762,7 @@ namespace LeaveManagement.Controllers
                 .Include(r => r.User)
                 .Include(r => r.LeaveType)
                 .FirstOrDefaultAsync(r => r.Id == id);
-
+          
             if (request == null) return NotFound();
 
             return View(request);
@@ -748,13 +846,13 @@ namespace LeaveManagement.Controllers
 
             if (request.Status == LeaveStatus.Pending)
             {
-                request.Status = model.Status;
+                request.Status = model.Status;  
                 await _context.SaveChangesAsync();
-                await CreateOrUpdateSalaryReportFromLeave(model.UserId, model.StartDate, model.EndDate, model.IsHalfDay);
+                await CreateOrUpdateSalaryReportFromLeave(request.UserId, model.StartDate, model.EndDate, model.IsHalfDay);
 
                 try
                 {
-                    await SendLeaveStatusEmailAsync(request);
+                        await SendLeaveStatusEmailAsync(request);
                     Console.WriteLine($"📧 Leave status email sent to {request.User.Email}");
                 }
                 catch (Exception ex)
@@ -1345,7 +1443,7 @@ namespace LeaveManagement.Controllers
 
                     leaveTaken += leaveDays;
                 }
-
+                    
                 decimal deductions = (decimal)(leaveTaken > totalWorkingDays ? totalWorkingDays : leaveTaken) * perDaySalary;
 
                 var salaryReport = new SalaryReport

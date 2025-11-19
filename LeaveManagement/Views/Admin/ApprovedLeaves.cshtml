@@ -30,7 +30,10 @@
                             <tr>
                                 <td>@item.User.FullName</td>
                                 <td>@item.LeaveType.Name</td>
-                                <td>@item.StartDate.ToShortDateString() - @item.EndDate.ToShortDateString()</td>
+                                <td data-order="@item.StartDate.ToString("yyyy-MM-dd")">
+                                    @item.StartDate.ToShortDateString() - @item.EndDate.ToShortDateString()
+                                </td>
+
                                 <td>@(item.IsHalfDay ? "Yes" : "No")</td>
                                 <td>@item.Reason</td>
                                 <td>
@@ -57,7 +60,8 @@
             "pageLength": 10,
             "lengthChange": true,
             "ordering": true,
-            "info": true
+            "info": true,
+            "order": [[2, "desc"]] // Date Range = column index 2
         });
     });
 </script>

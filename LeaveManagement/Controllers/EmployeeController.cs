@@ -264,7 +264,7 @@ namespace LeaveManagement.Controllers
             {
                 double allowed = 1; // Monthly paid leave
                 double takenThisMonth = 0;
-
+               
                 if (leavesByMonth.ContainsKey(month))
                 {
                     takenThisMonth = leavesByMonth[month].Sum(ld => ld.isHalfDay ? 0.5 : 1);
@@ -305,7 +305,7 @@ namespace LeaveManagement.Controllers
             var leaves = await _context.LeaveRequests
                 .Include(l => l.LeaveType)
                 .Where(l => l.UserId == user.Id)
-                .OrderByDescending(l => l.AppliedOn)
+                .OrderByDescending(l => l.StartDate)
                 .ToListAsync();
 
             return View(leaves);

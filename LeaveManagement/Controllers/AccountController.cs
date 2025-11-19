@@ -17,12 +17,26 @@ namespace LeaveManagement.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Login(){
+        public async Task<IActionResult> Login()
+        {
              var user = await _userManager.GetUserAsync(User);
-            if (user != null)
+            if(user == null)
             {
-                return RedirectToAction("ApplyLeave", "Employee");
+                return View();
             }
+            else
+            {
+                if (user.Role == "Employee")
+                {
+                    return RedirectToAction("ApplyLeave", "Employee");
+                }
+                else if (user.Role == "Manager")
+                {
+                    return RedirectToAction("Index", "Admin");
+                }
+            }
+           
+            
          return View();
         }
         [HttpPost]
@@ -122,6 +136,7 @@ namespace LeaveManagement.Controllers
             }
             return View(model);
         }
+        public IActionResult AccessDenied(string returnUrl) => RedirectToAction("Login");
 
     }
 
