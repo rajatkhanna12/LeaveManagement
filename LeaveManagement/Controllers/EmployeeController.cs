@@ -210,7 +210,31 @@ namespace LeaveManagement.Controllers
 
             await _emailService.SendEmailAsync(managerEmail, subject, body);
         }
-
+        public async Task<IActionResult> SalarySummary()
+        {
+            var emp = await _userManager.GetUserAsync(User);
+    
+            var today = DateTime.Today;
+            var monthStart = new DateTime(today.Year, today.Month, 1).AddMonths(-1);
+            var monthEnd = monthStart.AddMonths(1).AddDays(-1);
+            var adjustment = await _context.SalaryAdjustments
+                      .FirstOrDefaultAsync(x => x.EmployeeID == emp.Id &&
+                                                x.Month == monthStart.Month &&
+                                                x.Year == monthStart.Year);
+            var history = await _context.LeaveAdjustmentHistories
+                      .Where(x => x.EmployeeID == emp.Id &&
+                                  x.Month == monthStart.Month &&
+                                  x.Year == monthStart.Year)
+                      .OrderByDescending(x => x.Date)
+                      .ToListAsync();
+            var vm = new EmployeeSalarySummaryVM
+            {
+                Employee = emp,
+                Adjustment = adjustment,
+                History = history      
+            };
+            return View(vm);
+        }        
 
         [HttpGet]
         public async Task<IActionResult> MyLeaveSummary()
@@ -219,80 +243,48 @@ namespace LeaveManagement.Controllers
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return NotFound();
 
-            var today = DateTime.UtcNow;
-            int currentMonth = today.Month;
-            int currentYear = today.Year;
+            int currentYear = DateTime.Now.Year;
 
-            var startOfYear = new DateTime(currentYear, 1, 1);
-            var endOfCurrentMonth = new DateTime(currentYear, currentMonth, DateTime.DaysInMonth(currentYear, currentMonth));
-
-            var approvedLeaves = await _context.LeaveRequests
-                .Where(l => l.UserId == user.Id &&
-                            l.Status == LeaveStatus.Approved &&
-                            l.EndDate >= startOfYear &&
-                            l.StartDate <= endOfCurrentMonth)
+            // --------------------------------------------
+            // 1) Fetch All Salary Adjustments for this year
+            // --------------------------------------------
+            var adjustments = await _context.SalaryAdjustments
+                .Where(x => x.EmployeeID == user.Id && x.Year == currentYear)
                 .ToListAsync();
 
-            var leaveDays = new List<(DateTime date, bool isHalfDay)>();
+            // --------------------------------------------
+            // 2) Calculate totals from DB
+            // --------------------------------------------
+            double totalPaidUsed = adjustments.Sum(x => (double)x.PaidLeavesDeducted);
+            double totalFreeUsed = adjustments.Sum(x => (double)x.FreeLeavesUsed);
+            double totalLeavesTaken = adjustments.Sum(x => (double)x.LeavesTaken);
 
-            foreach (var leave in approvedLeaves)
-            {
-                var leaveStart = leave.StartDate < startOfYear ? startOfYear : leave.StartDate;
-                var leaveEnd = leave.EndDate > endOfCurrentMonth ? endOfCurrentMonth : leave.EndDate;
+            // --------------------------------------------
+            // 3) Remaining free leaves = From ASP.NET USER
+            // --------------------------------------------
+            double remainingFreeLeaves = Convert.ToDouble(user.FreeLeavesLeft.GetValueOrDefault());
 
-                for (var dt = leaveStart; dt <= leaveEnd; dt = dt.AddDays(1))
-                {
-                    if (dt.Year == currentYear && dt.Month <= currentMonth)
-                    {
-                        leaveDays.Add((dt, leave.IsHalfDay));
-                    }
-                }
-            }
 
-            var leavesByMonth = leaveDays
-                .GroupBy(ld => ld.date.Month)
-                .ToDictionary(
-                    g => g.Key,
-                    g => g.ToList()
-                );
-
-            double carryForward = 0;
-            double totalPaidUsed = 0;
-            double totalUnpaid = 0;
-
-            for (int month = 1; month <= currentMonth; month++)
-            {
-                double allowed = 1; // Monthly paid leave
-                double takenThisMonth = 0;
-               
-                if (leavesByMonth.ContainsKey(month))
-                {
-                    takenThisMonth = leavesByMonth[month].Sum(ld => ld.isHalfDay ? 0.5 : 1);
-                }
-
-                double available = allowed + carryForward;
-                double paidUsed = Math.Min(takenThisMonth, available);
-                double unpaid = Math.Max(0, takenThisMonth - available);
-
-                carryForward = Math.Max(0, available - paidUsed);
-                totalPaidUsed += paidUsed;
-                totalUnpaid += unpaid;
-            }
-
+            // --------------------------------------------
+            // 4) Prepare final model
+            // --------------------------------------------
             var model = new UserLeaveSummaryViewModel
             {
                 UserId = user.Id,
                 FullName = user.FullName,
                 Email = user.Email,
+
                 LeaveTypeName = "Annual Leave",
-                TotalAllocated = currentMonth,
-                Used = Math.Round(totalPaidUsed, 1),
-                Remaining = Math.Round(carryForward, 1)
+
+                TotalAllocated = user.YearlyFreeLeaves, // getting from asp.net user table 
+                Used = Math.Round(totalLeavesTaken, 1),  // total leave used this year
+                Remaining = Math.Round(remainingFreeLeaves, 1), // direct from DB table name aspnet user 
+                PaidUsed = Math.Round(totalPaidUsed, 1), // additional fields if needed
+                FreeUsed = Math.Round(totalFreeUsed, 1)
             };
 
             return View(model);
         }
-
 
 
 

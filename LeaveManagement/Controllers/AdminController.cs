@@ -8,6 +8,8 @@ using Microsoft.EntityFrameworkCore;
 using System.Net.Mail;
 using System.Net;
 using System.Text;
+using System.Security.Claims;
+using LeaveManagement.VM.DTOs;
 
 namespace LeaveManagement.Controllers
 {
@@ -72,6 +74,314 @@ namespace LeaveManagement.Controllers
             ViewBag.AnniversaryEmployees = anniversaryEmployees;
             return View(employees.AsEnumerable());
         }
+        public async Task<IActionResult> MonthlySalaryReport()
+        {
+            await SetUserInfoAsync();
+            var employees = await _userManager.GetUsersInRoleAsync("Employee");
+
+            var today = DateTime.Today;
+            int month = today.AddMonths(-1).Month;
+            int year = today.AddMonths(-1).Year;
+
+            var salaryAdjustments = await _context.SalaryAdjustments
+                            .Where(x => x.Month == month && x.Year == year)
+                            .ToListAsync();
+            var viewModel = employees.Select(e => new MonthlySalaryReportVM
+            {
+                Employee = e,
+                FinalSalary = salaryAdjustments
+          .FirstOrDefault(x => x.EmployeeID == e.Id)?.FinalSalary
+            });
+            var prev = today.AddMonths(-1);
+            ViewBag.Month = prev.ToString("MMMM yyyy"); ;
+            return View(viewModel);
+        }
+        private async Task<double> GetAvailableFreeLeavesForEmployee(string empId)
+        {
+            var today = DateTime.UtcNow;
+            int currentMonth = today.Month;
+            int currentYear = today.Year;
+
+            var startOfYear = new DateTime(currentYear, 1, 1);
+            var endOfCurrentMonth = new DateTime(currentYear, currentMonth, DateTime.DaysInMonth(currentYear, currentMonth));
+
+            // Get approved leaves
+            var approvedLeaves = await _context.LeaveRequests
+                .Where(l => l.UserId == empId &&
+                            l.Status == LeaveStatus.Approved &&
+                            l.EndDate >= startOfYear &&
+                            l.StartDate <= endOfCurrentMonth)
+                .ToListAsync();
+
+            // Flatten leave days
+            var leaveDays = new List<(DateTime date, bool isHalfDay)>();
+
+            foreach (var leave in approvedLeaves)
+            {
+                var leaveStart = leave.StartDate < startOfYear ? startOfYear : leave.StartDate;
+                var leaveEnd = leave.EndDate > endOfCurrentMonth ? endOfCurrentMonth : leave.EndDate;
+
+                for (var dt = leaveStart; dt <= leaveEnd; dt = dt.AddDays(1))
+                {
+                    if (dt.Year == currentYear && dt.Month <= currentMonth)
+                    {
+                        leaveDays.Add((dt, leave.IsHalfDay));
+                    }
+                }
+            }
+
+            // Group by month
+            var leavesByMonth = leaveDays
+                .GroupBy(ld => ld.date.Month)
+                .ToDictionary(g => g.Key, g => g.ToList());
+
+            double carryForward = 0;
+            double totalPaidUsed = 0;
+
+            for (int month = 1; month <= currentMonth; month++)
+            {
+                double allowed = 1; // 1 monthly free leave
+                double takenThisMonth = 0;
+
+                if (leavesByMonth.ContainsKey(month))
+                {
+                    takenThisMonth = leavesByMonth[month].Sum(ld => ld.isHalfDay ? 0.5 : 1);
+                }
+
+                double available = allowed + carryForward;
+                double paidUsed = Math.Min(takenThisMonth, available);
+
+                carryForward = Math.Max(0, available - paidUsed);
+                totalPaidUsed += paidUsed;
+            }
+
+            return Math.Round(carryForward, 1); // Remaining free leaves
+        }
+
+        public async Task<IActionResult> SalaryAdjustment(string empId)
+        {
+            if (string.IsNullOrWhiteSpace(empId))
+                return NotFound();
+
+            var employee = await _userManager.FindByIdAsync(empId);
+
+            if (employee == null)
+                return NotFound();
+            var today = DateTime.Today;
+            var prevMonthStart = new DateTime(today.Year, today.Month, 1).AddMonths(-1);
+            var prevMonthEnd = new DateTime(today.Year, today.Month, 1).AddDays(-1);
+            var prevApprovedLeaves = await _context.LeaveRequests
+                        .Where(lr =>
+                            lr.UserId == empId &&
+                            lr.Status == LeaveStatus.Approved &&
+                            lr.StartDate >= prevMonthStart &&
+                            lr.EndDate <= prevMonthEnd)
+                        .ToListAsync();
+            var leavesTaken = prevApprovedLeaves
+                    .Sum(x => x.IsHalfDay ? 0.5 : (x.EndDate - x.StartDate).TotalDays + 1);
+            double freeLeavesAvailable = Convert.ToDouble(employee.FreeLeavesLeft);
+
+            ViewBag.PrevMonthName = prevMonthStart.ToString("MMMM yyyy");
+            var history = await _context.LeaveAdjustmentHistories
+                        .Where(h => h.EmployeeID == empId &&
+                                    h.Month == prevMonthStart.Month &&
+                                    h.Year == prevMonthStart.Year)
+                        .OrderByDescending(h => h.Date)
+                        .ToListAsync();
+
+
+            var vm = new SalaryAdjustmentVM
+            {
+                Employee = employee,
+                PreviousMonthLeaves = prevApprovedLeaves,
+                PreviousMonthStart = prevMonthStart,
+                PreviousMonthEnd = prevMonthEnd,
+                TotalWorkingDays = (prevMonthEnd - prevMonthStart).Days + 1,
+                LeavesTaken = leavesTaken,
+                FreeLeavesAvailable  = freeLeavesAvailable,
+                History = history,
+
+            };
+            return View(vm); 
+        }
+        [HttpPost]
+        public async Task<IActionResult> SaveSalaryAdjustment([FromBody] SaveSalaryDto dto)
+        {
+            var admin = await _userManager.GetUserAsync(User);
+
+            var employeeUser = await _context.Users.FirstOrDefaultAsync(x => x.Id == dto.EmployeeId);
+            if (employeeUser == null)
+                return Json(new { success = false, message = "Employee not found." });
+
+            decimal currentFree = employeeUser.FreeLeavesLeft.GetValueOrDefault();
+
+            var existing = await _context.SalaryAdjustments
+                   .FirstOrDefaultAsync(x =>
+                       x.EmployeeID == dto.EmployeeId &&
+                       x.Month == dto.Month &&
+                       x.Year == dto.Year);
+
+
+            SalaryAdjustment adjustment;
+            if(existing != null)
+            {
+                adjustment = existing;
+
+                // ⭐ ROLLBACK OLD FREE LEAVE + APPLY NEW FREE LEAVE ⭐
+                currentFree += existing.FreeLeavesUsed;  // rollback
+                currentFree -= dto.FreeLeavesUsed;       // apply new
+
+                currentFree = Math.Round(currentFree, 1);
+                if (currentFree < 0) currentFree = 0;
+
+                employeeUser.FreeLeavesLeft = currentFree;
+                _context.Users.Update(employeeUser);
+
+
+                adjustment.LeavesTaken = dto.LeavesTaken;
+                adjustment.FreeLeavesUsed = dto.FreeLeavesUsed;
+                adjustment.PaidLeavesDeducted = dto.PaidLeavesDeducted;
+                adjustment.FreeLeavesRemaining = currentFree;
+
+                adjustment.OneDaySalaryValue = dto.OneDaySalaryValue;
+                adjustment.TotalDeduction = dto.TotalDeduction;
+                adjustment.FinalSalary = dto.FinalSalary;
+
+                adjustment.IsApproved = true;
+                adjustment.ApprovedOn = DateTime.Now;
+                adjustment.ApprovedBy = admin.Id;
+
+                _context.SalaryAdjustments.Update(adjustment);
+            }
+            else
+            {
+                 adjustment = new SalaryAdjustment
+                {
+                    EmployeeID = dto.EmployeeId,
+                    Month = dto.Month,
+                    Year = dto.Year,
+
+                    LeavesTaken = dto.LeavesTaken,
+                    FreeLeavesUsed = dto.FreeLeavesUsed,
+                    PaidLeavesDeducted = dto.PaidLeavesDeducted,
+                    FreeLeavesRemaining = Math.Round(dto.FreeLeavesRemaining, 1),
+
+                    OneDaySalaryValue = dto.OneDaySalaryValue,
+                    TotalDeduction = dto.TotalDeduction,
+                    FinalSalary = dto.FinalSalary,
+
+                    IsApproved = true,
+                    ApprovedOn = DateTime.Now,
+                    ApprovedBy = admin.Id
+                };
+
+                currentFree -= dto.FreeLeavesUsed;
+                currentFree = Math.Round(currentFree, 1);
+                if (currentFree < 0) currentFree = 0;
+
+                employeeUser.FreeLeavesLeft = currentFree;
+                _context.Users.Update(employeeUser);
+
+                adjustment.FreeLeavesRemaining = currentFree;
+
+
+                _context.SalaryAdjustments.Add(adjustment);
+            }
+            var oldHistory = _context.LeaveAdjustmentHistories
+                 .Where(x => x.EmployeeID == dto.EmployeeId &&
+                             x.Month == dto.Month &&
+                             x.Year == dto.Year);
+
+            _context.LeaveAdjustmentHistories.RemoveRange(oldHistory);
+
+            decimal freeUsed = dto.FreeLeavesUsed;
+            int freeFull = (int)Math.Floor((double)freeUsed); 
+            bool freeHalf = (freeUsed - freeFull) == 0.5m;
+
+            decimal paidUsed = dto.PaidLeavesDeducted;
+            int paidFull = (int)Math.Floor((double)paidUsed);
+            bool paidHalf = (paidUsed - paidFull) == 0.5m;
+
+
+            // add full day free  entry 
+            if (freeFull != 0)
+            {
+                _context.LeaveAdjustmentHistories.Add(new LeaveAdjustmentHistory
+                {
+                    EmployeeID = dto.EmployeeId,
+                    Date = DateTime.Now,
+                    LeaveType = "Full Day",
+                    Action = "Free Leave Used",
+                    FreeLeavesLeft = currentFree,
+                    PaidLeaves = 0,
+                    Month = dto.Month,
+                    Year = dto.Year
+                });
+            }
+            //Add half-day free entry
+            if (freeHalf)
+            {
+                _context.LeaveAdjustmentHistories.Add(new LeaveAdjustmentHistory
+                {
+                    EmployeeID = dto.EmployeeId,
+                    Date = DateTime.Now,
+                    LeaveType = "Half Day",
+                    Action = "Free Leave Used",
+                    FreeLeavesLeft = currentFree,
+                    PaidLeaves = 0,
+                    Month = dto.Month,
+                    Year = dto.Year
+                });
+            }
+            //Add full-day paid (deduction) entries
+            if (paidFull != 0)
+            {
+                _context.LeaveAdjustmentHistories.Add(new LeaveAdjustmentHistory
+                {
+                    EmployeeID = dto.EmployeeId,
+                    Date = DateTime.Now,
+                    LeaveType = "Full Day",
+                    Action = "Salary Deducted",
+                    FreeLeavesLeft = currentFree,
+                    PaidLeaves = paidFull,
+                    Month = dto.Month,
+                    Year = dto.Year
+                });
+            }
+            if (paidHalf)
+            {
+                _context.LeaveAdjustmentHistories.Add(new LeaveAdjustmentHistory
+                {
+                    EmployeeID = dto.EmployeeId,
+                    Date = DateTime.Now,
+                    LeaveType = "Half Day",
+                    Action = "Salary Deducted",
+                    FreeLeavesLeft = currentFree,
+                    PaidLeaves = 0.5m,
+                    Month = dto.Month,
+                    Year = dto.Year
+                });
+            }
+            if (freeUsed == 0m && paidUsed == 0m)
+            {
+                _context.LeaveAdjustmentHistories.Add(new LeaveAdjustmentHistory
+                {
+                    EmployeeID = dto.EmployeeId,
+                    Date = DateTime.Now,
+                    LeaveType = "-",
+                    Action = "No Deduction",
+                    FreeLeavesLeft = currentFree,
+                    PaidLeaves = 0,
+                    Month = dto.Month,
+                    Year = dto.Year
+                });
+            }
+            await _context.SaveChangesAsync();
+
+            return Json(new { success = true, message = "Salary adjustment saved." });
+        }
+
+
         [HttpPost]
         public async Task<IActionResult> SendCelebrationEmailsEmpAsync()
         {
@@ -471,6 +781,8 @@ namespace LeaveManagement.Controllers
                 model.BaseSalary = baseSalary;
                 model.UserName = model.Email;
                 model.EmailConfirmed = true;
+                model.YearlyFreeLeaves = model.YearlyFreeLeaves; // from form
+                model.FreeLeavesLeft = model.YearlyFreeLeaves;
                 var result = await _userManager.CreateAsync(model, "Default@123");
 
                 if (result.Succeeded)
@@ -676,6 +988,8 @@ namespace LeaveManagement.Controllers
                 user.IsActive = model.IsActive;
                 user.DateOfBirth = model.DateOfBirth;
                 user.Email = model.Email;
+                user.YearlyFreeLeaves = model.YearlyFreeLeaves;
+                user.FreeLeavesLeft = model.FreeLeavesLeft;
 
                 var result = await _userManager.UpdateAsync(user);
                 if (result.Succeeded)

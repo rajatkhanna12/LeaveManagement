@@ -28,6 +28,9 @@ namespace LeaveManagement.Models
         public string Role { get; set; }
 
         public bool IsActive { get; set; } = true;
+        public decimal YearlyFreeLeaves { get; set; } 
+        public decimal? FreeLeavesLeft { get; set; }
+
 
     }
 

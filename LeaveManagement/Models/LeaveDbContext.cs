@@ -13,6 +13,10 @@ namespace LeaveManagement.Models
         public DbSet<LeaveType> LeaveTypes { get; set; }
         public DbSet<SalaryReport> SalaryReports { get; set; }
         public DbSet<TblAttendance> tblAttendances { get; set; }
-       
+        public DbSet<SalaryAdjustment> SalaryAdjustments { get; set; }
+        public DbSet<LeaveAdjustmentHistory> LeaveAdjustmentHistories { get; set; }
+
+
+
     }
 }

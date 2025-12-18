@@ -3,8 +3,8 @@
     ViewData["Title"] = "My Leaves";
     Layout = "_EmployeeLayout";
 }
-
-<div class="container mt-4">
+<div class="card">
+<div class="container mt-4 p-6">
     <h2 class="mb-4">My Leave Applications</h2>
 
     <table class="table table-bordered table-hover shadow-sm">
@@ -54,7 +54,7 @@
         </tbody>
     </table>
 </div>
-
+</div>
 @functions {
     public string GetStatusClass(string status) => status switch
     {

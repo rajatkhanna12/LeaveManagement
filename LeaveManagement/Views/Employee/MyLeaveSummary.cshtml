@@ -4,45 +4,117 @@
     ViewData["Title"] = "Leave Summary";
     Layout = "~/Views/Shared/_EmployeeLayout.cshtml";
 }
+<!-- Employee Details Card -->
+<div class="card mb-4 shadow-sm">
+    <div class="card-body d-flex align-items-center">
 
+        <!-- Profile Initial -->
+        <div class="me-3">
+            <div style="
+                width:60px;
+                height:60px;
+                border-radius:50%;
+                background:#eef2ff;
+                display:flex;
+                align-items:center;
+                justify-content:center;
+                font-size:22px;
+                font-weight:600;
+                color:#556ee6;">
+                @Model.FullName.Substring(0, 1).ToUpper()
+            </div>
+        </div>
+
+        <!-- Employee Info -->
+        <div>
+            <h5 class="mb-1 fw-bold">@Model.FullName</h5>
+            <div class="text-muted">@Model.Email</div>
+           
+
+            <div class="mt-3">
+                <span class="badge bg-label-primary me-2">Allocated: @Model.TotalAllocated</span>
+                <span class="badge bg-label-info me-2">Used: @Model.Used</span>
+                <span class="badge bg-label-success">Remaining: @Model.Remaining</span>
+            </div>
+        </div>
+    </div>
+</div>
 <div class="card">
     <h5 class="card-header d-flex justify-content-between align-items-center">
         <span>Leave Summary</span>
-        <span class="text-primary fw-bold">Annual Leave : 12</span>
+        <span class="text-primary fw-bold">Annual Leave : @Model.TotalAllocated</span>
     </h5>
+
     <div class="table-responsive text-nowrap">
         <table class="table table-hover">
             <thead>
                 <tr>
-                    <th>Leave Type</th>
-                    <th>Total Allocated</th>
-                    <th>Used</th>
-                    <th>Remaining</th>
+                    <th>Leave Detail</th>
+                    <th>Value</th>
+                    <th>Status</th>
                 </tr>
             </thead>
+
             <tbody class="table-border-bottom-0">
+
+                <!-- Total Leaves Taken -->
                 <tr>
                     <td>
-                        <i class="bx bx-calendar bx-md text-info me-4"></i>
-                        <span>@Model.LeaveTypeName</span>
+                        <i class="bx bx-calendar bx-md text-info me-3"></i>
+                        Total Leaves Taken
                     </td>
-                    <td>@Model.TotalAllocated</td>
                     <td>@Model.Used</td>
+                    <td><span class="badge bg-label-primary">Used</span></td>
+                </tr>
+
+                <!-- Paid Leaves Used -->
+                <tr>
+                    <td>
+                        <i class="bx bx-money bx-md text-warning me-3"></i>
+                        Paid Leaves Used
+                    </td>
+                    <td>@Model.PaidUsed</td>
+                    <td><span class="badge bg-label-warning">Salary Deducted</span></td>
+                </tr>
+
+                <!-- Free Leaves Used -->
+                <tr>
+                    <td>
+                        <i class="bx bx-gift bx-md text-success me-3"></i>
+                        Free Leaves Used
+                    </td>
+                    <td>@Model.FreeUsed</td>
+                    <td><span class="badge bg-label-success">Free Leave</span></td>
+                </tr>
+
+                <!-- Remaining Free Leaves -->
+                <tr>
+                    <td>
+                        <i class="bx bx-check-circle bx-md text-primary me-3"></i>
+                        Remaining Free Leaves
+                    </td>
                     <td>
                         @if (Model.Remaining > 0)
                         {
-                            <span class="badge bg-label-success me-1">
-                                @Model.Remaining
-                            </span>
+                            <span class="">@Model.Remaining</span>
                         }
                         else
                         {
-                            <span class="badge bg-label-danger me-1">
-                                No Paid Leave available
-                            </span>
+                            <span class="">0</span>
+                        }
+                    </td>
+                    <td>
+                        @if (Model.Remaining > 0)
+                        {
+                            <span class="badge bg-label-success">Available</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-label-danger">No Free Leave</span>
                         }
                     </td>
                 </tr>
+
             </tbody>
         </table>
     </div>

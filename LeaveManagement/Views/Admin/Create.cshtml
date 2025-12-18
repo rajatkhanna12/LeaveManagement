@@ -19,56 +19,64 @@
                                 <label asp-for="FullName" class="form-label"></label>
                                 <div class="input-group input-group-merge">
                                     <span class="input-group-text"><i class="bx bx-user"></i></span>
-                                    <input asp-for="FullName" class="form-control" placeholder="John Doe" />
+                                    <input asp-for="FullName" class="form-control" placeholder="John Doe" required />
                                 </div>
-                                <span asp-validation-for="FullName" class="text-danger"></span>
+                               
                             </div>
 
                             <div class="mb-3">
                                 <label asp-for="Email" class="form-label"></label>
                                 <div class="input-group input-group-merge">
                                     <span class="input-group-text"><i class="bx bx-envelope"></i></span>
-                                    <input asp-for="Email" class="form-control" placeholder="john@example.com" />
+                                    <input asp-for="Email" class="form-control" placeholder="john@example.com" required />
                                 </div>
-                                <span asp-validation-for="Email" class="text-danger"></span>
+                 
                             </div>
 
                             <div class="mb-3">
                                 <label asp-for="PhoneNumber" class="form-label"></label>
                                 <div class="input-group input-group-merge">
                                     <span class="input-group-text"><i class="bx bx-phone"></i></span>
-                                    <input asp-for="PhoneNumber" class="form-control" placeholder="123-456-7890" />
+                                    <input asp-for="PhoneNumber" class="form-control" placeholder="123-456-7890" required />
                                 </div>
-                                <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+                               
                             </div>
 
                             <div class="mb-3">
                                 <label asp-for="JoiningDate" class="form-label"></label>
-                                <input asp-for="JoiningDate" class="form-control" type="date" />
-                                <span asp-validation-for="JoiningDate" class="text-danger"></span>
+                                <input asp-for="JoiningDate" class="form-control" type="date" required />
+                               
                             </div>
                             <div class="mb-3">
                                 <label asp-for="DateOfBirth" class="form-label"></label>
-                                <input asp-for="DateOfBirth" class="form-control" type="date" />
-                                <span asp-validation-for="DateOfBirth" class="text-danger"></span>
+                                <input asp-for="DateOfBirth" class="form-control" type="date" required />
+                                
                             </div>
                             <div class="mb-3">
                                 <label asp-for="BaseSalary" class="form-label"></label>
                                 <div class="input-group input-group-merge">
                                     <span class="input-group-text">₹</span>
-                                    <input asp-for="BaseSalary" class="form-control" />
+                                    <input asp-for="BaseSalary" class="form-control" required />
                                 </div>
-                                <span asp-validation-for="BaseSalary" class="text-danger"></span>
+                                
+                            </div>
+                            <div class="mb-3">
+                                <label asp-for="YearlyFreeLeaves" class="form-label">Yearly Free Leaves</label>
+                                <div class="input-group input-group-merge">
+                                    <span class="input-group-text"><i class="bx bx-calendar"></i></span>
+                                    <input asp-for="YearlyFreeLeaves" class="form-control" placeholder="e.g. 12" required />
+                                </div>
+                               
                             </div>
 
                             <div class="mb-3">
                                 <label asp-for="Role" class="form-label">Role</label>
-                                <select asp-for="Role" class="form-select">
+                                <select asp-for="Role" class="form-select" required>
                                     <option value="">Select Role</option>
                                     <option value="Employee">Employee</option>
                                    
                                 </select>
-                                <span asp-validation-for="Role" class="text-danger"></span>
+                              
                             </div>
 
                             <div class="mb-3 form-check">

@@ -1,0 +1,67 @@
+﻿@model IEnumerable<LeaveManagement.VM.MonthlySalaryReportVM>
+@{
+    ViewData["Title"] = "MonthlySalaryReport";
+    Layout = "~/Views/Shared/_ManagerLayout.cshtml";
+}
+<div class="card mt-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Employee List : @ViewBag.Month</h5>
+        
+    </div>
+
+    <div class="table-responsive text-nowrap">
+        <table id="employeeTable" class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Joining Date</th>
+                    <th>Status</th>   
+                    <th>Final Salary</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody class="table-border-bottom-0">
+                @foreach (var employee in Model)
+                {
+                    <tr>
+                        <td>
+                            <i class="bx bxs-user bx-md text-primary me-4"></i>
+                            <span>@employee.Employee.FullName</span>
+                        </td>
+                        <td>@employee.Employee.Email</td>
+                        <td>@employee.Employee.JoiningDate.ToShortDateString()</td>
+                        <td>
+                            <span class="badge bg-label-@(employee.Employee.IsActive ? "success" : "danger") me-1">
+                                @(employee.Employee.IsActive ? "Active" : "Disabled")
+                            </span>
+                        </td>                      
+                        <td>@employee.FinalSalary</td>
+                        <td>
+                            <a asp-action="SalaryAdjustment"
+                               asp-route-empId="@employee.Employee.Id"
+                               class="btn btn-sm btn-primary">
+                                Adjust Salary
+                            </a>
+
+                        </td>
+
+                        
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function () {
+        $('#employeeTable').DataTable({
+            "pageLength": 10,
+            "lengthChange": true,
+            "ordering": true,
+            "info": true
+        });
+    });
+</script>
+

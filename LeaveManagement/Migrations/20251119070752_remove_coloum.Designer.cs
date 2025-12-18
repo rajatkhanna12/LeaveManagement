@@ -4,6 +4,7 @@ using LeaveManagement.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace LeaveManagement.Migrations
 {
     [DbContext(typeof(LeaveDbContext))]
-    partial class LeaveDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251119070752_remove_coloum")]
+    partial class remove_coloum
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -43,9 +46,6 @@ namespace LeaveManagement.Migrations
 
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("bit");
-
-                    b.Property<decimal?>("FreeLeavesLeft")
-                        .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("FullName")
                         .IsRequired()
@@ -97,9 +97,6 @@ namespace LeaveManagement.Migrations
                     b.Property<string>("UserName")
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
-
-                    b.Property<decimal>("YearlyFreeLeaves")
-                        .HasColumnType("decimal(18,2)");
 
                     b.HasKey("Id");
 
@@ -157,46 +154,6 @@ namespace LeaveManagement.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Holidays");
-                });
-
-            modelBuilder.Entity("LeaveManagement.Models.LeaveAdjustmentHistory", b =>
-                {
-                    b.Property<Guid>("HistoryID")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Action")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("Date")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("EmployeeID")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<decimal>("FreeLeavesLeft")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<string>("LeaveType")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("Month")
-                        .HasColumnType("int");
-
-                    b.Property<decimal>("PaidLeaves")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<int>("Year")
-                        .HasColumnType("int");
-
-                    b.HasKey("HistoryID");
-
-                    b.HasIndex("EmployeeID");
-
-                    b.ToTable("LeaveAdjustmentHistories");
                 });
 
             modelBuilder.Entity("LeaveManagement.Models.LeaveRequest", b =>
@@ -259,59 +216,6 @@ namespace LeaveManagement.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("LeaveTypes");
-                });
-
-            modelBuilder.Entity("LeaveManagement.Models.SalaryAdjustment", b =>
-                {
-                    b.Property<Guid>("AdjustmentID")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("ApprovedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("ApprovedOn")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("EmployeeID")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<decimal>("FinalSalary")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<decimal>("FreeLeavesRemaining")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<decimal>("FreeLeavesUsed")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<bool>("IsApproved")
-                        .HasColumnType("bit");
-
-                    b.Property<decimal>("LeavesTaken")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<int>("Month")
-                        .HasColumnType("int");
-
-                    b.Property<decimal>("OneDaySalaryValue")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<decimal>("PaidLeavesDeducted")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<decimal>("TotalDeduction")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<int>("Year")
-                        .HasColumnType("int");
-
-                    b.HasKey("AdjustmentID");
-
-                    b.HasIndex("EmployeeID");
-
-                    b.ToTable("SalaryAdjustments");
                 });
 
             modelBuilder.Entity("LeaveManagement.Models.SalaryReport", b =>
@@ -535,17 +439,6 @@ namespace LeaveManagement.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("LeaveManagement.Models.LeaveAdjustmentHistory", b =>
-                {
-                    b.HasOne("LeaveManagement.Models.ApplicationUser", "Employee")
-                        .WithMany()
-                        .HasForeignKey("EmployeeID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Employee");
-                });
-
             modelBuilder.Entity("LeaveManagement.Models.LeaveRequest", b =>
                 {
                     b.HasOne("LeaveManagement.Models.LeaveType", "LeaveType")
@@ -561,17 +454,6 @@ namespace LeaveManagement.Migrations
                     b.Navigation("LeaveType");
 
                     b.Navigation("User");
-                });
-
-            modelBuilder.Entity("LeaveManagement.Models.SalaryAdjustment", b =>
-                {
-                    b.HasOne("LeaveManagement.Models.ApplicationUser", "Employee")
-                        .WithMany()
-                        .HasForeignKey("EmployeeID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Employee");
                 });
 
             modelBuilder.Entity("LeaveManagement.Models.SalaryReport", b =>

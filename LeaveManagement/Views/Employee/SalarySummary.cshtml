@@ -1,0 +1,349 @@
+﻿@using LeaveManagement.VM
+@model EmployeeSalarySummaryVM
+@{
+    ViewData["Title"] = "SalarySummary";
+    Layout = "~/Views/Shared/_EmployeeLayout.cshtml";
+}
+
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Salary Adjustment - Mockup</title>
+    <style>
+        :root {
+            --bg: #f5f7fb;
+            --card: #fff;
+            --muted: #6b7280;
+            --accent: #6c5ce7;
+            --success: #10b981;
+            --danger: #ef4444
+        }
+
+        body {
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+            background: var(--bg);
+            margin: 0;
+            color: #111
+        }
+
+        .container {
+            max-width: 1120px;
+            margin: 32px auto;
+            padding: 20px
+        }
+
+        .card {
+            background: var(--card);
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(18,38,63,0.06);
+            padding: 20px
+        }
+
+        h1 {
+            margin: 0 0 12px;
+            font-size: 26px
+        }
+
+        .row {
+            display: flex;
+            gap: 18px;
+            flex-wrap: wrap
+        }
+
+        .col {
+            flex: 1;
+            min-width: 220px
+        }
+
+        .meta {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap
+        }
+
+            .meta .pill {
+                background: #f3f4f6;
+                padding: 8px 12px;
+                border-radius: 8px;
+                color: var(--muted);
+                font-size: 13px
+            }
+
+        label {
+            font-size: 13px;
+            color: var(--muted);
+            display: block;
+            margin-bottom: 6px
+        }
+
+        select, input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #e6e9ee;
+            border-radius: 8px;
+            font-size: 14px
+        }
+
+        .summary {
+            margin-top: 16px;
+            padding: 14px;
+            border-radius: 10px;
+            background: #fbfdff;
+            border: 1px solid #eef2ff
+        }
+
+            .summary .line {
+                display: flex;
+                justify-content: space-between;
+                padding: 6px 0;
+                border-bottom: 1px dashed #eef2ff
+            }
+
+                .summary .line:last-child {
+                    border-bottom: none
+                }
+
+        .btn {
+            padding: 10px 16px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: #fff
+        }
+
+        .btn-ghost {
+            background: #f3f4f6;
+            color: #374151
+        }
+
+        .note {
+            font-size: 13px;
+            color: var(--muted);
+            margin-top: 8px
+        }
+
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 360px;
+            gap: 18px;
+            margin-top: 18px
+        }
+
+        .history {
+            margin-top: 12px;
+            border-top: 1px solid #eef2ff;
+            padding-top: 12px
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse
+        }
+
+        td, th {
+            padding: 10px;
+            border-bottom: 1px solid #f1f5f9;
+            text-align: left;
+            font-size: 14px
+        }
+
+        th {
+            color: var(--muted);
+            font-weight: 600
+        }
+
+        .green {
+            color: var(--success);
+            font-weight: 700
+        }
+
+        .danger {
+            color: var(--danger);
+            font-weight: 700
+        }
+
+        @@media(max - width:900px) {
+            .two-col {
+                grid-template-columns: 1fr
+            }
+
+            .row {
+                flex-direction: column
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="">
+        <div class="card">
+
+
+
+            <div style="margin-top:18px">
+                <h3 style="margin-bottom:8px">Employee View (what employee will see)</h3>
+                <div class="card">
+                    <div style="display:flex;justify-content:space-between;align-items:center">
+                        <div>
+                            <!-- ========================================================= -->
+                            <!-- CHECK #1 → IF MODEL ITSELF IS NULL -->
+                            <!-- ========================================================= -->
+                            @if (Model == null)
+                            {
+                                <div style="padding:20px; color:red; font-weight:bold;">
+                                    No data found.
+                                </div>
+                                return;
+                            }
+
+                            <!-- ========================================================= -->
+                            <!-- CHECK #2 → IF ADJUSTMENT IS NULL -->
+                            <!-- ========================================================= -->
+                            @if (Model.Adjustment == null)
+                            {
+                                <div style="padding:20px; color:red; font-weight:bold;">
+                                    No salary adjustment found for this month.
+                                </div>
+                                return;
+                            }
+                            <div style="font-weight:700">
+                                My Leave Summary — @(new DateTime(Model.Adjustment.Year, Model.Adjustment.Month, 1).ToString("MMMM yyyy"))
+                            </div>
+                            @if (Model?.Adjustment == null)
+                            {
+                                <div style="padding:20px; color:red; font-weight:bold;">
+                                    No salary adjustment found for this month.
+                                </div>
+                                return;
+                            }
+                            <div style="color:var(--muted);margin-top:6px">Leaves Taken: <strong id="empLeavesTaken">@Model.Adjustment.LeavesTaken.ToString("F1")</strong> — Free Used: <strong id="empFreeUsed">@Model.Adjustment.FreeLeavesUsed.ToString("F1")</strong> — Paid Deducted: <strong id="empPaidDed">@Model.Adjustment.PaidLeavesDeducted.ToString("F1")</strong> — Free Remaining: <strong id="empFreeRem">@Model.Adjustment.FreeLeavesRemaining.ToString("F1")</strong></div>
+                        </div>
+                        @* <div style="margin-top:8px; font-size:16px;">
+                            Employee: <strong>@Model.Employee.FullName</strong>
+                        </div> *@
+                        <div style="margin-top:6px; font-size:16px;">
+                            Final Salary:
+                            <strong style="color:#10b981;">
+                                ₹@Model.Adjustment.FinalSalary
+                            </strong>
+                        </div>
+                       @*  <div>
+                            <button class="btn btn-ghost" id="viewSlip">View Salary Slip</button>
+                        </div> *@
+                    </div>
+
+                    <div class="history">
+                        <div style="font-weight:700;margin-bottom:8px">Leave Deduction Timeline</div>
+                        <table>
+                            <thead><tr><th>Date</th><th>Type</th><th>Action</th><th>Balance After</th></tr></thead>
+                            <tbody id="emplHist">
+                                @if (Model.History == null || Model.History.Count == 0)
+                                {
+                                    <tr>
+                                        <td colspan="4" style="text-align:center; color:#999;">
+                                            No history found this month.
+                                        </td>
+                                    </tr>
+                                }
+                                else
+                                {
+                                    @foreach (var h in Model.History)
+                                    {
+                                        <tr>
+                                            <td>@h.Date.ToString("dd MMM")</td>
+                                            <td>@h.LeaveType</td>
+                                            <td>@h.Action</td>
+
+                                            <td>
+                                                @* ---- CASE 1: No Deduction ---- *@
+                                                @if (h.Action == "No Deduction")
+                                                {
+                                                    <span>Salary Fully Paid</span>
+                                                }
+                                                @* ---- CASE 2: FREE LEAVE USED ---- *@
+                                                else if (h.Action == "Free Leave Used")
+                                                {
+                                                    if (h.LeaveType == "Full Day")
+                                                    {
+                                                        <span>Free left: @h.FreeLeavesLeft.ToString("F1")</span>
+                                                    }
+                                                    else if (h.LeaveType == "Half Day")
+                                                    {
+                                                        <span>Free left: @h.FreeLeavesLeft.ToString("F1")</span>
+                                                    }
+                                                }
+                                                @* ---- CASE 3: SALARY DEDUCTED ---- *@
+                                                else if (h.Action == "Salary Deducted")
+                                                {
+                                                    if (h.LeaveType == "Full Day")
+                                                    {
+                                                        <span>Deducted: @h.PaidLeaves.ToString("F1") Day(s)</span>
+                                                    }
+                                                    else if (h.LeaveType == "Half Day")
+                                                    {
+                                                        <span>Deducted: 0.5 Day</span>
+                                                    }
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // Mock data (would be populated from server in real app)
+        const baseSalary = 41000;
+        const workingDays = 26; // config or compute from month
+        const leavesTaken = 2;
+        let freeAvailable = 5;
+
+        const freeSelect = document.getElementById('freeToApply');
+        const paidSelect = document.getElementById('paidToDeduct');
+        const summaryFree = document.getElementById('summaryFree');
+        const summaryPaid = document.getElementById('summaryPaid');
+        const summaryRemaining = document.getElementById('summaryRemaining');
+        const dayValue = document.getElementById('dayValue');
+        const totalDed = document.getElementById('totalDed');
+        const finalSalary = document.getElementById('finalSalary');
+        const pvBase = document.getElementById('pvBase');
+        const pvDed = document.getElementById('pvDed');
+        const pvFinal = document.getElementById('pvFinal');
+        const empLeavesTaken = document.getElementById('empLeavesTaken');
+        const empFreeUsed = document.getElementById('empFreeUsed');
+        const empPaidDed = document.getElementById('empPaidDed');
+        const empFreeRem = document.getElementById('empFreeRem');
+
+
+
+
+
+
+
+
+
+
+
+        document.getElementById('viewSlip').addEventListener('click',()=>{
+          alert('Salary Slip\n\n'+pvBase.textContent+'\nLeave Deduction: '+pvDed.textContent+'\nFinal: '+pvFinal.textContent);
+        });
+
+
+    </script>
+</body>
+</html>
+
+

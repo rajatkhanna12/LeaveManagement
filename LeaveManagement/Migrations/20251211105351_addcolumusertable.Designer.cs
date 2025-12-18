@@ -4,6 +4,7 @@ using LeaveManagement.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace LeaveManagement.Migrations
 {
     [DbContext(typeof(LeaveDbContext))]
-    partial class LeaveDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251211105351_addcolumusertable")]
+    partial class addcolumusertable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -43,9 +46,6 @@ namespace LeaveManagement.Migrations
 
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("bit");
-
-                    b.Property<decimal?>("FreeLeavesLeft")
-                        .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("FullName")
                         .IsRequired()
@@ -93,6 +93,9 @@ namespace LeaveManagement.Migrations
 
                     b.Property<bool>("TwoFactorEnabled")
                         .HasColumnType("bit");
+
+                    b.Property<decimal>("UsedFreeLeaves")
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("UserName")
                         .HasMaxLength(256)

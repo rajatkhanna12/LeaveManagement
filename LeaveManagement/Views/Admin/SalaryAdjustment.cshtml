@@ -1,0 +1,628 @@
+﻿@model LeaveManagement.VM.SalaryAdjustmentVM
+@{
+    ViewData["Title"] = "SalaryAdjustment";
+    Layout = "~/Views/Shared/_ManagerLayout.cshtml";
+    string name = Model.Employee.FullName ?? "";
+    var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+    string initials = parts.Length == 1
+        ? parts[0].Substring(0, 1).ToUpper()
+        : (parts[0].Substring(0, 1) + parts[^1].Substring(0, 1)).ToUpper();
+}
+
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Salary Adjustment - Mockup</title>
+    <style>
+        :root {
+            --bg: #f5f7fb;
+            --card: #fff;
+            --muted: #6b7280;
+            --accent: #6c5ce7;
+            --success: #10b981;
+            --danger: #ef4444
+        }
+
+        body {
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+            background: var(--bg);
+            margin: 0;
+            color: #111
+        }
+
+        .container {
+            max-width: 1120px;
+            margin: 32px auto;
+            padding: 20px
+        }
+
+        .card {
+            background: var(--card);
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(18,38,63,0.06);
+            padding: 20px
+        }
+
+        h1 {
+            margin: 0 0 12px;
+            font-size: 26px
+        }
+
+        .row {
+            display: flex;
+            gap: 18px;
+            flex-wrap: wrap
+        }
+
+        .col {
+            flex: 1;
+            min-width: 220px
+        }
+
+        .meta {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap
+        }
+
+            .meta .pill {
+                background: #f3f4f6;
+                padding: 8px 12px;
+                border-radius: 8px;
+                color: var(--muted);
+                font-size: 13px
+            }
+
+        label {
+            font-size: 13px;
+            color: var(--muted);
+            display: block;
+            margin-bottom: 6px
+        }
+
+        select, input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #e6e9ee;
+            border-radius: 8px;
+            font-size: 14px
+        }
+
+        .summary {
+            margin-top: 16px;
+            padding: 14px;
+            border-radius: 10px;
+            background: #fbfdff;
+            border: 1px solid #eef2ff
+        }
+
+            .summary .line {
+                display: flex;
+                justify-content: space-between;
+                padding: 6px 0;
+                border-bottom: 1px dashed #eef2ff
+            }
+
+                .summary .line:last-child {
+                    border-bottom: none
+                }
+
+        .btn {
+            padding: 10px 16px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: #fff
+        }
+
+        .btn-ghost {
+            background: #f3f4f6;
+            color: #374151
+        }
+
+        .note {
+            font-size: 13px;
+            color: var(--muted);
+            margin-top: 8px
+        }
+
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 360px;
+            gap: 18px;
+            margin-top: 18px
+        }
+
+        .history {
+            margin-top: 12px;
+            border-top: 1px solid #eef2ff;
+            padding-top: 12px
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse
+        }
+
+        td, th {
+            padding: 10px;
+            border-bottom: 1px solid #f1f5f9;
+            text-align: left;
+            font-size: 14px
+        }
+
+        th {
+            color: var(--muted);
+            font-weight: 600
+        }
+
+        .green {
+            color: var(--success);
+            font-weight: 700
+        }
+
+        .danger {
+            color: var(--danger);
+            font-weight: 700
+        }
+        @@media(max - width:900px) {
+            .two-col
+
+        {
+            grid-template-columns: 1fr
+        }
+
+        .row {
+            flex-direction: column
+        }
+
+        }
+    </style>
+</head>
+<body>
+    <div class="">
+        <div class="card">
+            <h1>Salary Adjustment — <span id="monthLabel">@ViewBag.PrevMonthName</span></h1>
+            <div class="row">
+                <div class="col">
+                    <div style="display:flex;align-items:center;gap:14px;">
+                        <div style="width:64px;height:64px;border-radius:10px;background:#eef2ff;display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--accent)">@initials</div>
+                        <div>
+                            <div style="font-weight:700;font-size:16px" id="empName">@Model.Employee.FullName</div>
+                            <div style="color:var(--muted);font-size:13px" id="empEmail">@Model.Employee.Email</div>
+                        </div>
+                    </div>
+
+                    <div class="meta" style="margin-top:14px">
+                        <div class="pill">Base Salary: <strong style="margin-left:8px">₹@Model.Employee.BaseSalary</strong></div>
+                        <div class="pill">Leaves Taken: <strong style="margin-left:8px" id="leavesTaken">@Model.LeavesTaken</strong></div>
+                        <div class="pill">Free Leaves Available: <strong style="margin-left:8px" id="freeAvailable">@Model.FreeLeavesAvailable</strong></div>
+                    </div>
+
+                    <div class="history card" style="margin-top:18px">
+                        <h3 style="margin:0 0 8px;font-size:15px">Leave Adjustment (admin controls)</h3>
+                        <div style="display:flex;gap:12px;flex-wrap:wrap">
+                            <div style="flex:1;min-width:160px">
+                                <label for="freeToApply">Free Leaves to Apply</label>
+                                <select id="freeToApply"></select>
+                            </div>
+
+                            <div style="flex:1;min-width:160px">
+                                <label for="paidToDeduct">Paid Leaves to Deduct (salary cut)</label>
+                                <select id="paidToDeduct"></select>
+                            </div>
+                        </div>
+
+                        <div class="note">Tip: Free + Paid cannot exceed Leaves Taken. You can choose to deduct even when free leaves exist.</div>
+
+                        <div class="summary" id="calcSummary">
+                            <div class="line"><div>Free Leaves Used</div><div id="summaryFree">0</div></div>
+                            <div class="line"><div>Paid Leaves Deducted</div><div id="summaryPaid">0</div></div>
+                            <div class="line"><div>Remaining Free Leaves</div><div id="summaryRemaining">@Model.FreeLeavesAvailable</div></div>
+                            <div class="line"><div>1 Day Salary Value</div><div id="dayValue">—</div></div>
+                            <div class="line"><div>Total Deduction</div><div id="totalDed">—</div></div>
+                            <div class="line"><div style="font-weight:700">Final Salary</div><div id="finalSalary" style="font-weight:700">—</div></div>
+                        </div>
+
+                        <div style="display:flex;gap:12px;margin-top:12px">
+                            <button class="btn btn-primary" id="approveBtn">Approve Salary</button>
+                            <button class="btn btn-ghost" id="cancelBtn">Cancel</button>
+                        </div>
+
+                        <div class="note" id="approvedNote" style="display:none;margin-top:10px">Salary approved and locked for month. Employee notified.</div>
+
+                    </div>
+                </div>
+
+                <div class="col" style="min-width:320px">
+                    <div class="card" style="padding:14px">
+                        <h3 style="margin-top:0">Salary Preview</h3>
+                        <table>
+                            <tr><th>Base Salary</th><td id="pvBase">₹@Model.Employee.BaseSalary</td></tr>
+                            <tr><th>Leave Deduction</th><td id="pvDed">-₹0</td></tr>
+                            <tr><th>Final Salary</th><td id="pvFinal">@Model.Employee.BaseSalary</td></tr>
+                        </table>
+
+                        <div style="margin-top:12px">
+                            <h4 style="margin:8px 0 6px">Adjustment History</h4>
+                            <table>
+                                <thead><tr><th style="width:120px">Date</th><th>Type</th><th>Admin Action</th><th>Result</th></tr></thead>
+                                <tbody id="histBody">
+                                    @if (Model.History == null || !Model.History.Any())
+                                    {
+                                        <tr>
+                                            <td colspan="4" style="text-align:center; color:#999; padding:10px;">
+                                                No history found
+                                            </td>
+                                        </tr>
+                                    }
+                                    else{
+                                        @foreach (var h in Model.History)
+                                        {
+                                            <tr>
+                                                <td>@h.Date.ToString("dd MMM")</td>
+                                                <td>@h.LeaveType</td>
+                                                <td>@h.Action</td>
+                                                <td>
+                                                    @* CASE 1: NO DEDUCTION *@
+                                                    @if (h.Action == "No Deduction")
+                                                    {
+                                                        <span>Salary Fully Paid</span>
+                                                    }
+                                                    @* CASE 2: FREE LEAVE USED *@
+                                                    else if (h.Action == "Free Leave Used")
+                                                    {
+                                                        if (h.LeaveType == "Full Day")
+                                                        {
+                                                            <span>Used: @h.PaidLeaves.ToString("F1") Day(s) | Free left: @h.FreeLeavesLeft.ToString("F1")</span>
+                                                        }
+                                                        else if (h.LeaveType == "Half Day")
+                                                        {
+                                                            <span>Used: 0.5 Day | Free left: @h.FreeLeavesLeft.ToString("F1")</span>
+                                                        }
+                                                    }
+                                                    @* CASE 3: SALARY DEDUCTED *@
+                                                    else if (h.Action == "Salary Deducted")
+                                                    {
+                                                        if (h.LeaveType == "Full Day")
+                                                        {
+                                                            <span>Deducted: @h.PaidLeaves.ToString("F1") Day(s)</span>
+                                                        }
+                                                        else if (h.LeaveType == "Half Day")
+                                                        {
+                                                            <span>Deducted: 0.5 Day</span>
+                                                        }
+                                                    }
+                                                </td>
+                                            </tr>
+                                        }
+                                    }
+                                  
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+           
+
+        </div>
+    </div>
+    <input type="hidden" id="empId" value="@Model.Employee.Id" />
+    <input type="hidden" id="month" value="@Model.PreviousMonthStart.Month" />
+    <input type="hidden" id="year" value="@Model.PreviousMonthStart.Year" />
+    <input type="hidden" id="leavesTakenVal" value="@Model.LeavesTaken" />
+
+    <script>
+        // Mock data (would be populated from server in real app)
+        const baseSalary = @Model.Employee.BaseSalary;
+        const workingDays = @Model.TotalWorkingDays; // config or compute from month
+        const leavesTaken = @Model.LeavesTaken;
+        let freeAvailable = @Model.FreeLeavesAvailable;
+
+        const freeSelect = document.getElementById('freeToApply');
+        const paidSelect = document.getElementById('paidToDeduct');
+        const summaryFree = document.getElementById('summaryFree');
+        const summaryPaid = document.getElementById('summaryPaid');
+        const summaryRemaining = document.getElementById('summaryRemaining');
+        const dayValue = document.getElementById('dayValue');
+        const totalDed = document.getElementById('totalDed');
+        const finalSalary = document.getElementById('finalSalary');
+        const pvBase = document.getElementById('pvBase');
+        const pvDed = document.getElementById('pvDed');
+        const pvFinal = document.getElementById('pvFinal');
+
+        function refreshPaidDropdown() {
+            paidSelect.innerHTML = "";
+            for (let i = 0; i <= leavesTaken; i += 0.5) {
+                const opt = document.createElement("option");
+                opt.value = i.toFixed(1);
+                opt.textContent = i.toFixed(1);
+                paidSelect.appendChild(opt);
+            }
+        }
+
+        function refreshFreeDropdown() {
+
+            const usedPaid = parseFloat(paidSelect.value || 0);
+
+            // Rule: free + paid <= leavesTaken
+            let maxFree = leavesTaken - usedPaid;
+
+            if (maxFree < 0) maxFree = 0;
+            if (maxFree > freeAvailable) maxFree = freeAvailable;
+
+            const prevFree = parseFloat(freeSelect.value || 0);
+
+            freeSelect.innerHTML = "";
+
+            for (let i = 0; i <= maxFree + 0.001; i += 0.5) {
+                const opt = document.createElement("option");
+                opt.value = i.toFixed(1);
+                opt.textContent = i.toFixed(1);
+                freeSelect.appendChild(opt);
+            }
+
+            // restore selection if possible
+            freeSelect.value = Math.min(prevFree, maxFree).toFixed(1);
+        }
+
+        // freeSelect.innerHTML = "";
+        // let maxFreeCanUse = Math.min(leavesTaken, freeAvailable);
+        // for (let i = 0; i <= maxFreeCanUse; i += 0.5) {
+        //     const opt = document.createElement("option");
+        //     opt.value = i.toFixed(1);
+        //     opt.textContent = i.toFixed(1);
+        //     freeSelect.appendChild(opt);
+        // }
+        // paidSelect.innerHTML = "";
+        // for (let i = 0; i <= leavesTaken; i += 0.5) {
+        //     const opt = document.createElement("option");
+        //     opt.value = i.toFixed(1);
+        //     opt.textContent = i.toFixed(1);
+        //     paidSelect.appendChild(opt);
+        // }
+        // After populating dropdowns
+
+        paidSelect.addEventListener("change", () => {
+            refreshFreeDropdown();
+            renderCalc();
+        });
+
+        
+        freeSelect.addEventListener("change", () => {
+            renderCalc();
+        });
+        freeSelect.value = "0.0";
+        paidSelect.value = "0.0";
+
+        // NOW run calculation
+        renderCalc();
+        refreshPaidDropdown();
+        refreshFreeDropdown();
+
+        function renderCalc() {
+
+            const usedFree = parseFloat(freeSelect.value || 0);
+            const usedPaid = parseFloat(paidSelect.value || 0);
+
+            
+
+            // remaining free leave calculation
+              const remainingNum = freeAvailable - usedFree;
+              const remaining = remainingNum.toFixed(1);
+
+
+            const dayVal = +(baseSalary / workingDays).toFixed(2);
+            const totalDeduction = +(dayVal * usedPaid).toFixed(2);
+            const final = +(baseSalary - totalDeduction).toFixed(2);
+
+            summaryFree.textContent = usedFree;
+            summaryPaid.textContent = usedPaid;
+            summaryRemaining.textContent = remaining;
+            dayValue.textContent = '₹' + dayVal.toLocaleString();
+            totalDed.textContent = '₹' + totalDeduction.toLocaleString();
+            finalSalary.textContent = '₹' + final.toLocaleString();
+
+            pvBase.textContent = '₹' + baseSalary.toLocaleString();
+            pvDed.textContent = '-₹' + totalDeduction.toLocaleString();
+            pvFinal.textContent = '₹' + final.toLocaleString();
+
+            // empLeavesTaken.textContent = leavesTaken;
+            // empFreeUsed.textContent = usedFree;
+            // empPaidDed.textContent = usedPaid;
+            // empFreeRem.textContent = remaining;
+        }
+
+        
+
+        freeSelect.addEventListener('change',()=>{
+          // rebuild paid options so that paid max = leavesTaken - freeSelected
+          const freeUse = parseFloat(freeSelect.value||0);
+          const prevPaid = parseFloat(paidSelect.value||0);
+          const maxPaid = leavesTaken - freeUse;
+          paidSelect.innerHTML='';
+          for(let i = 0; i <= maxPaid + 0.001; i += 0.5){
+              const o=document.createElement('option');
+              o.value=i.toFixed(1);
+              o.textContent=i.toFixed(1);
+              paidSelect.appendChild(o);
+          }
+        paidSelect.value = Math.min(prevPaid, maxPaid).toFixed(1);
+          renderCalc();
+        });
+
+        paidSelect.addEventListener('change',()=>{ renderCalc(); });
+
+        function validateAdjustmentBeforeApprove() {
+            const usedFree = parseFloat(freeSelect.value || 0);
+            const usedPaid = parseFloat(paidSelect.value || 0);
+
+            const totalAdjusted = usedFree + usedPaid;
+
+                if (totalAdjusted !== leavesTaken) {
+                    alert(`Total adjusted leaves (${totalAdjusted}) is not matching with Leaves Taken (${leavesTaken}).\n\nPlease adjust all leaves before approving the salary.`);
+                    return false;
+                }
+             return true;
+        }
+
+        document.getElementById('approveBtn').addEventListener('click', () => {
+
+                if (!validateAdjustmentBeforeApprove()) {
+                    return; 
+                }
+
+            const dto = {
+                EmployeeId: document.getElementById("empId").value,
+                Month: parseInt(document.getElementById("month").value),
+                Year: parseInt(document.getElementById("year").value),
+                LeavesTaken: leavesTaken,
+                FreeLeavesUsed: parseFloat(freeSelect.value),
+                PaidLeavesDeducted: parseFloat(paidSelect.value),
+                FreeLeavesRemaining: freeAvailable - parseFloat(freeSelect.value),
+                OneDaySalaryValue: +(baseSalary / workingDays).toFixed(2),
+                TotalDeduction: +( (baseSalary / workingDays) * parseFloat(paidSelect.value) ).toFixed(2),
+                FinalSalary: +( baseSalary - ((baseSalary / workingDays) * parseFloat(paidSelect.value)) ).toFixed(2)
+            };
+
+            // AJAX POST
+            fetch('/Admin/SaveSalaryAdjustment', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(dto)
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    debugger;
+                    document.getElementById('approvedNote').style.display = 'block';
+                    freeSelect.disabled = true; paidSelect.disabled = true; document.getElementById('approveBtn').disabled=true;
+                    const freeUsed = parseFloat(freeSelect.value || 0);
+                    const paidUsed = parseFloat(paidSelect.value || 0);
+
+                    const freeFull = Math.floor(freeUsed);
+                    const freeHalf = (freeUsed % 1) === 0.5;
+
+
+                    const paidFull = Math.floor(paidUsed);
+                    const paidHalf = (paidUsed % 1) === 0.5;
+
+
+                     const histBody = document.getElementById('histBody');
+                     const d = new Date();
+                     const day = d.getDate() + ' ' + d.toLocaleString('default', { month: 'short' });
+
+                     //-----------------No deduction at all------------
+                    if (freeUsed === 0 && paidUsed === 0) {
+                        const tr = document.createElement("tr");
+                        tr.innerHTML = `
+                            <td>${day}</td>
+                            <td>-</td>
+                            <td>No Deduction</td>
+                            <td>Salary Fully Paid</td>
+                        `;
+                        histBody.prepend(tr);
+                    }
+
+
+                    
+
+                    if (freeFull > 0) {
+                        const tr = document.createElement("tr");
+                        tr.innerHTML = `
+                            <td>${day}</td>
+                            <td>Full Day</td>
+                            <td>Free Leave Used</td>
+                            <td>Free left: ${(freeAvailable - freeUsed).toFixed(1)}</td>
+                        `;
+                        histBody.prepend(tr);
+                    }
+                    if (freeHalf) {
+                        const tr = document.createElement("tr");
+                        tr.innerHTML = `
+                            <td>${day}</td>
+                            <td>Half Day</td>
+                            <td>Free Leave Used</td>
+                            <td>Free left: ${(freeAvailable - freeUsed).toFixed(1)}</td>
+                        `;
+                        histBody.prepend(tr);
+                    }
+
+
+                  
+                    if (paidFull > 0) {
+                        const tr = document.createElement("tr");
+                        tr.innerHTML = `
+                            <td>${day}</td>
+                            <td>Full Day</td>
+                            <td>Salary Deducted</td>
+                            <td>Deducted: ${paidFull} Day(s)</td>
+                        `;
+                        histBody.prepend(tr);
+                    }
+
+                    if (paidHalf) {
+                        const tr = document.createElement("tr");
+                        tr.innerHTML = `
+                            <td>${day}</td>
+                            <td>Half Day</td>
+                            <td>Salary Deducted</td>
+                            <td>Deducted: 0.5 Day</td>
+                        `;
+                        histBody.prepend(tr);
+                    }
+
+                    alert("Salary Approved & Saved Successfully!");
+
+                } else {
+                    alert("Error: Could not save salary adjustment.");
+                }
+            })
+            .catch(err => {
+                alert("Server Error: " + err);
+            });
+        });
+
+
+        document.getElementById('approveBtn1').addEventListener('click',()=>{           
+          // in real app, send to server. Here, just show approved note and disable controls
+          document.getElementById('approvedNote').style.display='block';
+          freeSelect.disabled = true; paidSelect.disabled = true; document.getElementById('approveBtn').disabled=true;
+
+          // update history (append a row)
+          const histBody = document.getElementById('histBody');
+          const d = new Date();
+          const day = d.getDate() + ' ' + d.toLocaleString('default',{month:'short'});
+          const freeUsed = parseInt(freeSelect.value||0);
+          const paidUsed = parseInt(paidSelect.value||0);
+          if(freeUsed>0){ const tr=document.createElement('tr'); tr.innerHTML=`<td>${day}</td><td>Full Day</td><td>Free Leave Used</td><td>Free left: ${freeAvailable-freeUsed}</td>`; histBody.prepend(tr); }
+          if(paidUsed>0){ const tr=document.createElement('tr'); tr.innerHTML=`<td>${day}</td><td>Full Day</td><td>Salary Deducted</td><td>Deducted: ${paidUsed} Day(s)</td>`; histBody.prepend(tr); }
+
+          // in real workflow update employee history and leave balance on server
+        });
+
+        document.getElementById('cancelBtn').addEventListener('click',()=>{
+          // reset
+          freeSelect.value=0; paidSelect.value=0; renderCalc();
+        });
+
+       
+
+        // initial values
+        freeSelect.value = 0; paidSelect.value = 0; renderCalc();
+    </script>
+</body>
+</html>
+
+
