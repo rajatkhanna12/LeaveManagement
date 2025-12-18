@@ -705,6 +705,31 @@ namespace LeaveManagement.Controllers
             await SetUserInfoAsync();
             return View();
         }
+        [HttpPost]
+        public async Task<IActionResult> Create(ApplicationUser model, decimal baseSalary)
+        {
+            await SetUserInfoAsync();
+            if (ModelState.IsValid)
+            {
+                model.BaseSalary = baseSalary;
+                model.UserName = model.Email;
+                model.EmailConfirmed = true;
+                model.YearlyFreeLeaves = model.YearlyFreeLeaves; // from form
+                model.FreeLeavesLeft = model.YearlyFreeLeaves;
+                var result = await _userManager.CreateAsync(model, "Default@123");
+
+                if (result.Succeeded)
+                {
+                    await _userManager.AddToRoleAsync(model, model.Role);
+                    return RedirectToAction("Index");
+                }
+
+                foreach (var error in result.Errors)
+                    ModelState.AddModelError("", error.Description);
+            }
+
+            return View(model);
+        }
 
         public async Task<IActionResult> SalaryList()
         {
@@ -772,31 +797,7 @@ namespace LeaveManagement.Controllers
             return View(null);
         }
 
-        [HttpPost]
-        public async Task<IActionResult> Create(ApplicationUser model, decimal baseSalary)
-        {
-            await SetUserInfoAsync();
-            if (ModelState.IsValid)
-            {
-                model.BaseSalary = baseSalary;
-                model.UserName = model.Email;
-                model.EmailConfirmed = true;
-                model.YearlyFreeLeaves = model.YearlyFreeLeaves; // from form
-                model.FreeLeavesLeft = model.YearlyFreeLeaves;
-                var result = await _userManager.CreateAsync(model, "Default@123");
-
-                if (result.Succeeded)
-                {
-                    await _userManager.AddToRoleAsync(model, model.Role);
-                    return RedirectToAction("Index");
-                }
-
-                foreach (var error in result.Errors)
-                    ModelState.AddModelError("", error.Description);
-            }
-
-            return View(model);
-        }
+   
 
         [HttpGet]
 
@@ -816,7 +817,6 @@ namespace LeaveManagement.Controllers
 
             return View();
         }   
-
 
         [HttpPost]
         public async Task<IActionResult> ApplyLeave(LeaveRequest model)
@@ -969,7 +969,6 @@ namespace LeaveManagement.Controllers
 
             return View(user);
         }
-
 
         [HttpPost]
         public async Task<IActionResult> Edit(ApplicationUser model, decimal baseSalary)
@@ -1267,72 +1266,30 @@ namespace LeaveManagement.Controllers
         [HttpGet]
         public async Task<IActionResult> RemainingLeaves()
         {
-            var today = DateTime.UtcNow;
-            int currentMonth = today.Month;
-            int currentYear = today.Year;
+            int currentYear = DateTime.Now.Year;
 
-            var startOfYear = new DateTime(currentYear, 1, 1);
-            var endOfCurrentMonth = new DateTime(currentYear, currentMonth, DateTime.DaysInMonth(currentYear, currentMonth));
-
+            // 1) Get all employees
             var users = await _userManager.GetUsersInRoleAsync("Employee");
+            var userIds = users.Select(u => u.Id).ToList();
+
+            // 2) Fetch all salary adjustments for current year (ONE QUERY)
+            var adjustments = await _context.SalaryAdjustments
+                .Where(x => userIds.Contains(x.EmployeeID) && x.Year == currentYear)
+                .ToListAsync();
+
             var summaries = new List<UserLeaveSummaryViewModel>();
 
             foreach (var user in users)
             {
-                var approvedLeaves = await _context.LeaveRequests
-                    .Where(l => l.UserId == user.Id &&
-                                l.Status == LeaveStatus.Approved &&
-                                l.EndDate >= startOfYear &&
-                                l.StartDate <= endOfCurrentMonth)
-                    .ToListAsync();
+                var userAdjustments = adjustments
+                    .Where(x => x.EmployeeID == user.Id)
+                    .ToList();
 
-                // Step 1: Flatten all leave days
-                var leaveDays = new List<(DateTime date, bool isHalfDay)>();
+                double paidUsed = userAdjustments.Sum(x => (double)x.PaidLeavesDeducted);
+                double freeUsed = userAdjustments.Sum(x => (double)x.FreeLeavesUsed);
+                double totalUsed = userAdjustments.Sum(x => (double)x.LeavesTaken);
 
-                foreach (var leave in approvedLeaves)
-                {
-                    var leaveStart = leave.StartDate < startOfYear ? startOfYear : leave.StartDate;
-                    var leaveEnd = leave.EndDate > endOfCurrentMonth ? endOfCurrentMonth : leave.EndDate;
-
-                    for (var dt = leaveStart; dt <= leaveEnd; dt = dt.AddDays(1))
-                    {
-                        if (dt.Year == currentYear && dt.Month <= currentMonth)
-                        {
-                            leaveDays.Add((dt, leave.IsHalfDay));
-                        }
-                    }
-                }
-
-                // Step 2: Group by month
-                var leavesByMonth = leaveDays
-                    .GroupBy(ld => ld.date.Month)
-                    .ToDictionary(
-                        g => g.Key,
-                        g => g.ToList()
-                    );
-
-                double carryForward = 0;
-                double totalPaidUsed = 0;
-                double totalUnpaid = 0;
-
-                for (int month = 1; month <= currentMonth; month++)
-                {
-                    double allowed = 1; // Paid leaves allocated per month
-                    double takenThisMonth = 0;
-
-                    if (leavesByMonth.ContainsKey(month))
-                    {
-                        takenThisMonth = leavesByMonth[month].Sum(ld => ld.isHalfDay ? 0.5 : 1);
-                    }
-
-                    double available = allowed + carryForward;
-                    double paidUsed = Math.Min(takenThisMonth, available);
-                    double unpaid = Math.Max(0, takenThisMonth - available);
-
-                    carryForward = Math.Max(0, available - paidUsed);
-                    totalPaidUsed += paidUsed;
-                    totalUnpaid += unpaid;
-                }
+                double remainingFree = Convert.ToDouble(user.FreeLeavesLeft.GetValueOrDefault());
 
                 summaries.Add(new UserLeaveSummaryViewModel
                 {
@@ -1340,15 +1297,18 @@ namespace LeaveManagement.Controllers
                     FullName = user.FullName,
                     Email = user.Email,
                     LeaveTypeName = "Annual Leave",
-                    TotalAllocated = currentMonth,
-                    Used = Math.Round(totalPaidUsed, 1),
 
-                    Remaining = Math.Round(carryForward, 1)
+                    TotalAllocated = user.YearlyFreeLeaves,
+                    Used = Math.Round(totalUsed, 1),
+                    PaidUsed = Math.Round(paidUsed, 1),
+                    FreeUsed = Math.Round(freeUsed, 1),
+                    Remaining = Math.Round(remainingFree, 1)
                 });
             }
 
             return View(summaries);
         }
+
 
 
         public async Task CheckRemainingLeavesAndNotifyAsync()

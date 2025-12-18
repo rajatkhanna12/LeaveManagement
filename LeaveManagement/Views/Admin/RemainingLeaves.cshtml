@@ -5,18 +5,22 @@
     Layout = "~/Views/Shared/_ManagerLayout.cshtml";
 }
 
-<div class="card">
-    <h5 class="card-header">All Employees Leave Summary</h5>
+<div class="card shadow-sm">
+    <h5 class="card-header d-flex justify-content-between align-items-center">
+        <span>All Employees Leave Summary</span>
+        <span class="text-bold">Current Year</span>
+    </h5>
     <div class="table-responsive text-nowrap">
-        <table class="table table-hover" id="allLeaveSummaryTable">
-            <thead>
+        <table class="table table-hover align-middle" id="allLeaveSummaryTable">
+            <thead class="table-light">
                 <tr>
-                    <th>Name</th>
-                    <th>Email</th>
-             
-                    <th>Total Allocated</th>
-                    <th>Used</th>
-                    <th>Remaining</th>
+                    <th>Employee</th>
+                    <th>Email</th>             
+                    <th>Allocated</th>
+                    <th>Total Used</th>
+                    <th>Paid Used</th>
+                    <th>Free Used</th>
+                    <th>Remaining Free</th>
                 </tr>
             </thead>
             <tbody class="table-border-bottom-0">
@@ -32,16 +36,26 @@
                         <td>@item.TotalAllocated</td>
                         <td>@item.Used</td>
                         <td>
+                            <span class="badge bg-label-warning">
+                                @item.PaidUsed
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge bg-label-success">
+                                @item.FreeUsed
+                            </span>
+                        </td>
+                        <td>
                             @if (item.Remaining > 0)
                             {
-                                <span class="badge bg-label-success me-1">
+                                <span class="badge bg-label-success">
                                     @item.Remaining
                                 </span>
                             }
                             else
                             {
-                                <span class="badge bg-label-danger me-1">
-                                    No Paid Leave available
+                                <span class="badge bg-label-danger">
+                                    0
                                 </span>
                             }
                         </td>
