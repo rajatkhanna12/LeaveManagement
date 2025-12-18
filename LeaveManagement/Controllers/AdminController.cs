@@ -4,12 +4,12 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
 using System.Net.Mail;
 using System.Net;
 using System.Text;
 using System.Security.Claims;
 using LeaveManagement.VM.DTOs;
+using Microsoft.EntityFrameworkCore;
 
 namespace LeaveManagement.Controllers
 {

@@ -39,14 +39,33 @@
         [Display(Name = "Email")]
         public string Email { get; set; }
 
-        [StringLength(100)]
+        //[StringLength(100)]
+        //[DataType(DataType.Password)]
+        //[Display(Name = "New Password (for reset)")]
+        //public string NewPassword { get; set; }
+
+        //[DataType(DataType.Password)]
+        //[Display(Name = "Confirm Password")]
+        //[Compare("NewPassword", ErrorMessage = "Passwords do not match.")]
+        //public string ConfirmPassword { get; set; }
+    }
+
+    public class ResetPasswordViewModel
+    {
+        [Required]
+        public string Email { get; set; }
+
+        [Required]
+        public string Token { get; set; }
+
+        [Required]
         [DataType(DataType.Password)]
-        [Display(Name = "New Password (for reset)")]
         public string NewPassword { get; set; }
 
+        [Required]
         [DataType(DataType.Password)]
-        [Display(Name = "Confirm Password")]
-        [Compare("NewPassword", ErrorMessage = "Passwords do not match.")]
+        [Compare("NewPassword")]
         public string ConfirmPassword { get; set; }
     }
+
 }
