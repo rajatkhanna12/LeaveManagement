@@ -3,56 +3,318 @@
     ViewData["Title"] = "My Leaves";
     Layout = "_EmployeeLayout";
 }
-<div class="card">
-<div class="container mt-4 p-6">
-    <h2 class="mb-4">My Leave Applications</h2>
+@* <div class="card">
+    <div class="container mt-4 p-6">
+        <h2 class="mb-4">My Leave Applications</h2>
 
-    <table class="table table-bordered table-hover shadow-sm">
-        <thead class="table-dark">
-            <tr>
-                <th>#</th>
-                <th>Type</th>
-                <th>From</th>
-                <th>To</th>
-                <th>Half Day</th>
-                <th>Status</th>
-                <th>Applied On</th>
-              @*   <th>Action</th> *@
-            </tr>
-        </thead>
-        <tbody>
-            @if (Model != null && Model.Any())
-            {
-                int count = 1;
-                foreach (var leave in Model)
+        <table class="table table-bordered table-hover shadow-sm">
+            <thead class="table-dark">
+                <tr>
+                    <th>#</th>
+                    <th>Type</th>
+                    <th>From</th>
+                    <th>To</th>
+                    <th>Half Day</th>
+                    <th>Status</th>
+                    <th>Applied On</th>
+                    
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model != null && Model.Any())
+                {
+                    int count = 1;
+                    foreach (var leave in Model)
+                    {
+                        <tr>
+                            <td>@count</td>
+                            <td>@leave.LeaveType?.Name</td>
+                            <td>@leave.StartDate.ToShortDateString()</td>
+                            <td>@leave.EndDate.ToShortDateString()</td>
+                            <td>@(leave.IsHalfDay ? "Yes" : "No")</td>
+                            <td>
+                                <span class="badge bg-@GetStatusClass(leave.Status.ToString())">
+                                    @leave.Status
+                                </span>
+                            </td>
+                            <td>@leave.AppliedOn.ToShortDateString()</td>
+                           
+                        </tr>
+                        count++;
+                    }
+                }
+                else
                 {
                     <tr>
-                        <td>@count</td>
-                        <td>@leave.LeaveType?.Name</td>
-                        <td>@leave.StartDate.ToShortDateString()</td>
-                        <td>@leave.EndDate.ToShortDateString()</td>
-                        <td>@(leave.IsHalfDay ? "Yes" : "No")</td>
-                        <td>
-                            <span class="badge bg-@GetStatusClass(leave.Status.ToString())">
-                                @leave.Status
-                            </span>
-                        </td>
-                        <td>@leave.AppliedOn.ToShortDateString()</td>
-                       @*  <td>
-                            <a class="btn btn-sm btn-outline-primary" asp-action="LeaveDetails" asp-route-id="@leave.Id">Details</a>
-                        </td> *@
+                        <td colspan="8" class="text-center text-muted">No leave records found.</td>
                     </tr>
-                    count++;
                 }
-            }
-            else
-            {
-                <tr>
-                    <td colspan="8" class="text-center text-muted">No leave records found.</td>
-                </tr>
-            }
-        </tbody>
-    </table>
+            </tbody>
+        </table>
+    </div>
+</div> *@
+<div class="card">
+    <div class="container mt-4 p-6">
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <title>My Leave Applications</title>
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+
+            <style>
+                body {
+                    font-family: "Segoe UI", sans-serif;
+                    background: #f5f6fb;
+                    margin: 0;
+                    padding: 30px;
+                }
+
+                .container {
+                    max-width: 1100px;
+                    margin: auto;
+                }
+
+                h2 {
+                    color: #2b2f4c;
+                    margin-bottom: 5px;
+                }
+
+                .subtitle {
+                    color: #7b7f9a;
+                    margin-bottom: 25px;
+                }
+
+                /* Cards */
+                .card {
+                    background: #fff;
+                    border-radius: 14px;
+                    box-shadow: 0 8px 25px rgba(0,0,0,.06);
+                    padding: 25px;
+                    margin-bottom: 25px;
+                }
+
+                /* Summary */
+                .summary {
+                    display: grid;
+                    grid-template-columns: repeat(4, 1fr);
+                    gap: 15px;
+                }
+
+                .summary-card {
+                    background: #f3f4ff;
+                    border-radius: 12px;
+                    padding: 18px;
+                    text-align: center;
+                }
+
+                    .summary-card h3 {
+                        margin: 0;
+                        font-size: 22px;
+                        color: #6c63ff;
+                    }
+
+                    .summary-card span {
+                        font-size: 13px;
+                        color: #555;
+                    }
+
+                /* Table */
+                table {
+                    width: 100%;
+                    border-collapse: collapse;
+                }
+
+                th {
+                    background: #f3f4ff;
+                    color: #555;
+                    font-size: 13px;
+                    padding: 14px;
+                    text-align: left;
+                }
+
+                td {
+                    padding: 14px;
+                    border-bottom: 1px solid #eee;
+                    font-size: 14px;
+                    color: #333;
+                }
+
+                tr:hover {
+                    background: #f8f9ff;
+                }
+
+                /* Status */
+                .badge {
+                    padding: 6px 14px;
+                    border-radius: 20px;
+                    font-size: 12px;
+                    color: #fff;
+                }
+
+                .pending {
+                    background: #f4b400;
+                }
+
+                .approved {
+                    background: #34a853;
+                }
+
+                .rejected {
+                    background: #ea4335;
+                }
+
+                /* Actions */
+                .actions button {
+                    border: none;
+                    background: transparent;
+                    cursor: pointer;
+                    font-size: 15px;
+                    margin-right: 6px;
+                }
+
+                /* Expand */
+                .details {
+                    display: none;
+                    background: #f3f4ff;
+                    font-size: 13px;
+                }
+
+                    .details td {
+                        padding: 18px;
+                        color: #444;
+                    }
+
+                @@media(max - width:768px) {
+                    .summary {
+                        grid-template-columns: 1fr 1fr;
+                    }
+
+                    table, thead, tbody, th, td, tr {
+                        display: block;
+                    }
+
+                    th {
+                        display: none;
+                    }
+
+                    tr {
+                        margin-bottom: 15px;
+                        background: #fff;
+                        border-radius: 12px;
+                    }
+
+                    td {
+                        display: flex;
+                        justify-content: space-between;
+                        border: none;
+                    }
+                }
+            </style>
+        </head>
+
+        <body>
+
+            <div class="">
+
+                <h2>My Leave Applications</h2>
+                <p class="subtitle">Track and manage your leave requests</p>
+
+                <!-- Summary -->
+                <div class="card">
+                    <div class="summary">
+                        <div class="summary-card">
+                            <h3>@ViewBag.TotalLeaves</h3>
+                            <span>Total Leaves</span>
+                        </div>
+                        <div class="summary-card">
+                            <h3>@ViewBag.ApprovedLeaves</h3>
+                            <span>Approved</span>
+                        </div>
+                        <div class="summary-card">
+                            <h3>@ViewBag.PendingLeaves</h3>
+                            <span>Pending</span>
+                        </div>
+                        <div class="summary-card">
+                            <h3>@ViewBag.RejectedLeaves</h3>
+                            <span>Rejected</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Leave Table -->
+                <div class="card">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>From</th>
+                                <th>To</th>
+                                <th>Days</th>
+                                <th>Half Day</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model != null && Model.Any())
+                            {
+                                int count = 1;
+                                foreach (var leave in Model)
+                                {
+                                    var rowId = $"details-{count}";
+                                    var totalDays = (leave.EndDate - leave.StartDate).Days + 1;
+
+                                    <tr onclick="toggleDetails('@rowId')">
+                                        <td>@count</td>
+                                        <td>@leave.StartDate.ToShortDateString()</td>
+                                        <td>@leave.EndDate.ToShortDateString()</td>
+                                        <td>1</td>
+                                        <td>@(leave.IsHalfDay ? "YES" : "NO")</td>
+                                        <td>
+                                            <span class="badge bg-@GetStatusClass(leave.Status.ToString())">
+                                                @leave.Status
+                                            </span>
+                                        </td>
+                                        <td class="actions">
+                                            👁️ 
+                                        </td>
+                                    </tr>
+
+                                    <tr id="@rowId" class="details" style="display:none;">
+
+                                        <td colspan="7">
+                                            <strong>Reason:</strong>@leave.Reason<br><br>
+                                            <strong>Applied On:</strong>@leave.AppliedOn.ToShortDateString()<br>
+                                            <strong>Approver:</strong> Team Lead<br>
+                                            <strong>Current Stage:</strong> @leave.Status
+                                        </td>
+                                    </tr>
+                                    count++;
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="7" class="text-center text-muted">No leave records found.</td>
+                                </tr>
+                            }
+                        
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+
+            <script>
+                function toggleDetails(id) {
+                           const row = document.getElementById(id);
+                row.style.display = row.style.display === "none" ? "table-row" : "none";
+                }
+            </script>
+
+        </body>
+    </html>
 </div>
 </div>
 @functions {

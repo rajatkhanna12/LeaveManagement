@@ -92,10 +92,12 @@ namespace LeaveManagement.Controllers
             var result = await _userManager.ChangePasswordAsync(user, model.CurrentPassword, model.NewPassword);
             if (result.Succeeded)
             {
-                await _signInManager.RefreshSignInAsync(user);
-                TempData["Success"] = " Your password has been changed successfully.";
-                //return RedirectToAction("Login");
-                return RedirectToAction("ChangePassword");
+                await _userManager.UpdateSecurityStampAsync(user);
+                await _signInManager.SignOutAsync();
+
+                TempData["Success"] = "Password changed successfully. Please login again.";
+
+                return RedirectToAction("Login");
             }
 
             foreach (var error in result.Errors)

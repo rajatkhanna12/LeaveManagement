@@ -64,7 +64,7 @@
                         Total Leaves Taken
                     </td>
                     <td>@Model.Used</td>
-                    <td><span class="badge bg-label-primary">Used</span></td>
+                    <td><span class="">Used</span></td>
                 </tr>
 
                 <!-- Paid Leaves Used -->
@@ -74,7 +74,7 @@
                         Paid Leaves Used
                     </td>
                     <td>@Model.PaidUsed</td>
-                    <td><span class="badge bg-label-warning">Salary Deducted</span></td>
+                    <td><span class="">Salary Deducted</span></td>
                 </tr>
 
                 <!-- Free Leaves Used -->
@@ -84,7 +84,7 @@
                         Free Leaves Used
                     </td>
                     <td>@Model.FreeUsed</td>
-                    <td><span class="badge bg-label-success">Free Leave</span></td>
+                    <td><span class="">Free Leave</span></td>
                 </tr>
 
                 <!-- Remaining Free Leaves -->
@@ -106,11 +106,11 @@
                     <td>
                         @if (Model.Remaining > 0)
                         {
-                            <span class="badge bg-label-success">Available</span>
+                            <span class="">Available</span>
                         }
                         else
                         {
-                            <span class="badge bg-label-danger">No Free Leave</span>
+                            <span class="">No Free Leave</span>
                         }
                     </td>
                 </tr>

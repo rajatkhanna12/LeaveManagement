@@ -1,0 +1,242 @@
+﻿@model List<LeaveManagement.Models.Holiday>
+@{
+    Layout = "_EmployeeLayout";
+}
+<div class="card">
+    <div class="container mt-4 p-6">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Holiday List</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <style>
+        body {
+            font-family: "Segoe UI", sans-serif;
+            background: #f5f6fb;
+            margin: 0;
+            padding: 30px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: auto;
+        }
+
+        h2 {
+            color: #2b2f4c;
+            margin-bottom: 5px;
+        }
+
+        .subtitle {
+            color: #7b7f9a;
+            margin-bottom: 25px;
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 14px;
+            box-shadow: 0 8px 25px rgba(0,0,0,.06);
+            padding: 25px;
+            margin-bottom: 25px;
+        }
+
+        /* Month Header */
+        .month {
+            font-size: 18px;
+            font-weight: 600;
+            color: #6c63ff;
+            margin-bottom: 15px;
+        }
+
+        /* Holiday Row */
+        .holiday {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+            .holiday:last-child {
+                border-bottom: none;
+            }
+
+        .left {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .date {
+            width: 55px;
+            height: 55px;
+            border-radius: 12px;
+            background: #f3f4ff;
+            color: #6c63ff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+
+            .date span {
+                font-size: 12px;
+                color: #555;
+                font-weight: normal;
+            }
+
+        .details strong {
+            display: block;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .details small {
+            color: #777;
+            font-size: 12px;
+        }
+
+        /* Badges */
+        .badge {
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            color: #fff;
+            white-space: nowrap;
+        }
+
+        .national {
+            background: #6c63ff;
+        }
+
+        .optional {
+            background: #4caf50;
+        }
+
+        @@media(max - width:600px) {
+            .holiday
+
+        {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+
+        <h2>Holiday List</h2>
+        <p class="subtitle">Company holidays for @ViewBag.SelectedYear</p>
+                @if (Model != null && Model.Any())
+                {
+                    var groupedHolidays = Model
+                    .GroupBy(x => new { x.Month, x.Year })
+                    .OrderBy(g => g.Key.Month);
+
+                    foreach (var monthGroup in groupedHolidays)
+                    {
+                        <div class="card">
+                            <div class="month">
+                                @System.Globalization.CultureInfo.CurrentCulture
+                                .DateTimeFormat
+                                .GetMonthName(monthGroup.Key.Month)
+                                @monthGroup.Key.Year
+                            </div>
+
+                            @foreach (var holiday in monthGroup)
+                            {
+                                <div class="holiday">
+                                    <div class="left">
+                                        <div class="date">
+                                            @holiday.HolidayDate.Day
+                                            <span>@holiday.HolidayDate.ToString("ddd")</span>
+                                        </div>
+
+                                        <div class="details">
+                                            <strong>@holiday.HolidayName</strong>
+                                            <small>@holiday.Description</small>
+                                        </div>
+                                    </div>
+
+                                    <span class="badge @(holiday.HolidayType == "National" ? "national" : "optional")">
+                                        @holiday.HolidayType
+                                    </span>
+                                </div>
+                            }
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="card">
+                        <p>No holidays found for this year.</p>
+                    </div>
+                }
+        <!-- January -->
+        <div class="card">
+            <div class="month">January 2025</div>
+
+            <div class="holiday">
+                <div class="left">
+                    <div class="date">
+                        01
+                        <span>Wed</span>
+                    </div>
+                    <div class="details">
+                        <strong>New Year</strong>
+                        <small>Start the year fresh</small>
+                    </div>
+                </div>
+                <span class="badge national">National</span>
+            </div>
+
+            <div class="holiday">
+                <div class="left">
+                    <div class="date">
+                        26
+                        <span>Sun</span>
+                    </div>
+                    <div class="details">
+                        <strong>Republic Day</strong>
+                        <small>National Holiday</small>
+                    </div>
+                </div>
+                <span class="badge national">National</span>
+            </div>
+        </div>
+
+        <!-- March -->
+        <div class="card">
+            <div class="month">March 2025</div>
+
+            <div class="holiday">
+                <div class="left">
+                    <div class="date">
+                        08
+                        <span>Sat</span>
+                    </div>
+                    <div class="details">
+                        <strong>Holi</strong>
+                        <small>Festival of colors</small>
+                    </div>
+                </div>
+                <span class="badge optional">Optional</span>
+            </div>
+        </div>
+
+    </div>
+
+</body>
+</html>
+</div>
+</div>
+
+

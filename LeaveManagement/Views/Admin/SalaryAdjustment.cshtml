@@ -375,22 +375,7 @@
             freeSelect.value = Math.min(prevFree, maxFree).toFixed(1);
         }
 
-        // freeSelect.innerHTML = "";
-        // let maxFreeCanUse = Math.min(leavesTaken, freeAvailable);
-        // for (let i = 0; i <= maxFreeCanUse; i += 0.5) {
-        //     const opt = document.createElement("option");
-        //     opt.value = i.toFixed(1);
-        //     opt.textContent = i.toFixed(1);
-        //     freeSelect.appendChild(opt);
-        // }
-        // paidSelect.innerHTML = "";
-        // for (let i = 0; i <= leavesTaken; i += 0.5) {
-        //     const opt = document.createElement("option");
-        //     opt.value = i.toFixed(1);
-        //     opt.textContent = i.toFixed(1);
-        //     paidSelect.appendChild(opt);
-        // }
-        // After populating dropdowns
+       
 
         paidSelect.addEventListener("change", () => {
             refreshFreeDropdown();
@@ -436,10 +421,7 @@
             pvDed.textContent = '-₹' + totalDeduction.toLocaleString();
             pvFinal.textContent = '₹' + final.toLocaleString();
 
-            // empLeavesTaken.textContent = leavesTaken;
-            // empFreeUsed.textContent = usedFree;
-            // empPaidDed.textContent = usedPaid;
-            // empFreeRem.textContent = remaining;
+            
         }
 
         

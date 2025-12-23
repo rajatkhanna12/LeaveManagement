@@ -4,6 +4,7 @@ using LeaveManagement.VM;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.DataAnnotations;
 using Microsoft.AspNetCore.Mvc.Razor;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
@@ -32,7 +33,7 @@ namespace LeaveManagement.Controllers
             _serviceProvider = serviceProvider;
             _emailService = emailService;
         }
-        // Logged In user
+
         private async Task SetUserInfoAsync()
         {
             if (User?.Identity != null && User.Identity.IsAuthenticated)
@@ -52,16 +53,15 @@ namespace LeaveManagement.Controllers
             ViewBag.UserName = "Guest";
             ViewBag.UserRole = "Unknown";
         }
-
-
         [HttpGet]
         public async Task<IActionResult> ApplyLeave()
         {
             await SetUserInfoAsync();
+            var user = await _userManager.GetUserAsync(User);
+            ViewBag.FreeLeaveBal = user?.FreeLeavesLeft;
             ViewBag.LeaveTypes = await _context.LeaveTypes.ToListAsync();
             return View();
         }
-
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ApplyLeave(LeaveRequest model)
@@ -100,6 +100,7 @@ namespace LeaveManagement.Controllers
             if (!ModelState.IsValid)
             {
                 ViewBag.LeaveTypes = await _context.LeaveTypes.ToListAsync();
+                ViewBag.FreeLeaveBal = user.FreeLeavesLeft;
                 return View(model);
             }
 
@@ -123,9 +124,8 @@ namespace LeaveManagement.Controllers
                 Console.WriteLine($"❌ Failed to send manager email: {ex.Message}");
             }
             TempData["Success"] = "Leave request submitted successfully!";
-            return RedirectToAction("MyLeaves");
+            return RedirectToAction("ApplyLeave");
         }
-
         private async Task SendLeaveRequestEmailAsync(ApplicationUser user, LeaveRequest model, string managerEmail)
         {
             string subject = $"📝 New Leave Request from {user.FullName}";
@@ -235,7 +235,6 @@ namespace LeaveManagement.Controllers
             };
             return View(vm);
         }        
-
         [HttpGet]
         public async Task<IActionResult> MyLeaveSummary()
         {
@@ -286,6 +285,17 @@ namespace LeaveManagement.Controllers
             return View(model);
         }
 
+        public IActionResult HolidayList()
+        {
+            int selectedYear =  DateTime.Now.Year;
+            var holidays = _context.Holidays
+                .Where(x => x.IsActive && x.Year == selectedYear)
+                .OrderBy(x => x.HolidayDate)
+                .ToList();
+
+            ViewBag.SelectedYear = selectedYear;
+            return View(holidays);
+        }
 
 
         [HttpGet]
@@ -299,6 +309,11 @@ namespace LeaveManagement.Controllers
                 .Where(l => l.UserId == user.Id)
                 .OrderByDescending(l => l.StartDate)
                 .ToListAsync();
+
+            ViewBag.TotalLeaves = leaves.Count;
+            ViewBag.ApprovedLeaves = leaves.Count(x => x.Status == LeaveStatus.Approved);
+            ViewBag.PendingLeaves = leaves.Count(x => x.Status == LeaveStatus.Pending);
+            ViewBag.RejectedLeaves = leaves.Count(x => x.Status == LeaveStatus.Rejected);
 
             return View(leaves);
         }

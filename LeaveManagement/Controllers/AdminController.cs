@@ -380,8 +380,6 @@ namespace LeaveManagement.Controllers
 
             return Json(new { success = true, message = "Salary adjustment saved." });
         }
-
-
         [HttpPost]
         public async Task<IActionResult> SendCelebrationEmailsEmpAsync()
         {
@@ -1000,8 +998,6 @@ namespace LeaveManagement.Controllers
 
             return View(model);
         }
-
-
         public async Task<IActionResult> Delete(string id)
         {
             await SetUserInfoAsync();
