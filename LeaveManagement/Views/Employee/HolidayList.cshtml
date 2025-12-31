@@ -145,11 +145,9 @@
                     {
                         <div class="card">
                             <div class="month">
-                                @System.Globalization.CultureInfo.CurrentCulture
-                                .DateTimeFormat
-                                .GetMonthName(monthGroup.Key.Month)
-                                @monthGroup.Key.Year
+                                @($"{System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(monthGroup.Key.Month)} {monthGroup.Key.Year}")
                             </div>
+
 
                             @foreach (var holiday in monthGroup)
                             {
@@ -180,58 +178,7 @@
                         <p>No holidays found for this year.</p>
                     </div>
                 }
-        <!-- January -->
-        <div class="card">
-            <div class="month">January 2025</div>
-
-            <div class="holiday">
-                <div class="left">
-                    <div class="date">
-                        01
-                        <span>Wed</span>
-                    </div>
-                    <div class="details">
-                        <strong>New Year</strong>
-                        <small>Start the year fresh</small>
-                    </div>
-                </div>
-                <span class="badge national">National</span>
-            </div>
-
-            <div class="holiday">
-                <div class="left">
-                    <div class="date">
-                        26
-                        <span>Sun</span>
-                    </div>
-                    <div class="details">
-                        <strong>Republic Day</strong>
-                        <small>National Holiday</small>
-                    </div>
-                </div>
-                <span class="badge national">National</span>
-            </div>
-        </div>
-
-        <!-- March -->
-        <div class="card">
-            <div class="month">March 2025</div>
-
-            <div class="holiday">
-                <div class="left">
-                    <div class="date">
-                        08
-                        <span>Sat</span>
-                    </div>
-                    <div class="details">
-                        <strong>Holi</strong>
-                        <small>Festival of colors</small>
-                    </div>
-                </div>
-                <span class="badge optional">Optional</span>
-            </div>
-        </div>
-
+ 
     </div>
 
 </body>

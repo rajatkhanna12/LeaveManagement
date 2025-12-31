@@ -252,6 +252,7 @@
                                 <th>To</th>
                                 <th>Days</th>
                                 <th>Half Day</th>
+                                <th>Half Day Type</th>
                                 <th>Status</th>
                                 <th>Actions</th>
                             </tr>
@@ -271,6 +272,11 @@
                                         <td>@leave.EndDate.ToShortDateString()</td>
                                         <td>1</td>
                                         <td>@(leave.IsHalfDay ? "YES" : "NO")</td>
+                                        <td>
+                                            @(leave.IsHalfDay && !string.IsNullOrWhiteSpace(leave.HalfDayType)
+                                                ? leave.HalfDayType
+                                                : "-")
+                                        </td>
                                         <td>
                                             <span class="badge bg-@GetStatusClass(leave.Status.ToString())">
                                                 @leave.Status

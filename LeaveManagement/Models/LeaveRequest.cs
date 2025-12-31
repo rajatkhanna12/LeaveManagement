@@ -9,10 +9,9 @@
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
         public bool IsHalfDay { get; set; }
-
         public int LeaveTypeId { get; set; }
         public LeaveType? LeaveType { get; set; }
-
+        public string? HalfDayType { get; set; }
         public string Reason { get; set; }
         public LeaveStatus Status { get; set; } = LeaveStatus.Pending;
         public DateTime AppliedOn { get; set; } = DateTime.UtcNow;

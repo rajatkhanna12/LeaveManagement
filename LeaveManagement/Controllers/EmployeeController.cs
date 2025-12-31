@@ -69,6 +69,13 @@ namespace LeaveManagement.Controllers
             await SetUserInfoAsync();
             var user = await _userManager.GetUserAsync(User);
 
+            model.LeaveTypeId = await _context.LeaveTypes
+                        .Where(x => x.Name == "Monthly Leave")
+                        .Select(x => x.Id)
+                        .FirstOrDefaultAsync();
+
+
+
             if (model.StartDate > model.EndDate)
             {
                 ModelState.AddModelError("", "Start date must be before end date.");
@@ -81,7 +88,10 @@ namespace LeaveManagement.Controllers
             {
                 ModelState.AddModelError("EndDate", "End date must be after today.");
             }
-
+            if (model.IsHalfDay && string.IsNullOrWhiteSpace(model.HalfDayType))
+            {
+                ModelState.AddModelError("HalfDayType", "Please select half day type (Morning or Evening).");
+            }
             model.UserId = user.Id;
             model.Status = LeaveStatus.Pending;
             model.AppliedOn = DateTime.UtcNow;
@@ -116,6 +126,7 @@ namespace LeaveManagement.Controllers
 
                 model.LeaveType = new LeaveType { Name = leaveTypeName };
                 string managerEmail = "rajatkhanna.netdeveloper@gmail.com"; // Can be fetched dynamically
+              //  string managerEmail = "aman240dhiman@gmail.com"; // Can be fetched dynamically
                 await SendLeaveRequestEmailAsync(user, model, managerEmail);
                 Console.WriteLine($"📧 Leave request email sent to {managerEmail}");
             }
@@ -191,6 +202,11 @@ namespace LeaveManagement.Controllers
 
                                             <div class='highlight'>
                                                 <p><strong>Leave Type:</strong> {model.LeaveType.Name}</p>
+                                                <p><strong>Leave Type:</strong> {(model.IsHalfDay ? "Half Day" : "Full Day")}</p>
+                                                {(model.IsHalfDay && !string.IsNullOrWhiteSpace(model.HalfDayType)
+                                                    ? $"<p><strong>Half Day Type:</strong> {model.HalfDayType}</p>"
+                                                    : "")}
+
                                                 <p><strong>Duration:</strong> {model.StartDate:dd MMM yyyy} - {model.EndDate:dd MMM yyyy}</p>
                                                 <p><strong>Reason:</strong> {model.Reason}</p>
                                                 <p><strong>Status:</strong> Pending</p>

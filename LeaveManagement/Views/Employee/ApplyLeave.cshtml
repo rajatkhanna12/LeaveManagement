@@ -230,7 +230,7 @@
                     <div asp-validation-summary="All" class="text-danger"></div>
                     <!-- Dates -->
                     <div class="form-row">
-                        <div>
+                       @*  <div>
                             <label asp-for="LeaveTypeId">Half Day Type</label>
                             <select asp-for="LeaveTypeId">
                                 <option value="">-- Select Leave Type --</option>
@@ -240,36 +240,38 @@
                                 }
                             </select>
                                 <span asp-validation-for="LeaveTypeId" class="text-danger"></span>
-                        </div>
+                        </div> *@
                         <div>
                             <label>Start Date</label>
                             <input asp-for="StartDate" type="date" id="startDate">
                                 <span asp-validation-for="StartDate" class="text-danger"></span>
                         </div>
+                            <div>
+                                <label>End Date</label>
+                                <input asp-for="EndDate" type="date" id="endDate">
+                                <span asp-validation-for="EndDate" class="text-danger"></span>
+
+                            </div>
                        
                     </div>
 
                     <!-- Half Day -->
                     <div class="form-row">
-                        <div>
-                            <label>End Date</label>
-                            <input asp-for="EndDate" type="date" id="endDate">
-                                <span asp-validation-for="EndDate" class="text-danger"></span>
-
-                        </div>
+                        
                         <div class="toggle">
                             <label asp-for="IsHalfDay">Half Day</label>
                             <input asp-for="IsHalfDay" type="checkbox" id="halfDay">
                                 <span asp-validation-for="IsHalfDay" class="text-danger"></span>
                         </div>
 
-                        @* <div>
+                        <div>
                             <label>Half Day Type</label>
-                            <select id="halfType" disabled>
+                            <select asp-for="HalfDayType" id="halfType" disabled>
+                                <option value="" >Select Half Day Type</option>
                                 <option value="Morning">Morning</option>
                                 <option value="Evening">Evening</option>
                             </select>
-                        </div> *@
+                        </div>
                     </div>
 
                     <!-- Reason -->
@@ -321,7 +323,7 @@
                 end.addEventListener("change", calculateDays);
 
                 halfDay.addEventListener("change", () => {
-                    // halfType.disabled = !halfDay.checked;
+                    halfType.disabled = !halfDay.checked;
                     calculateDays();
                 });
             </script>
