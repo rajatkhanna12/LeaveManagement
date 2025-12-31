@@ -1263,6 +1263,7 @@ namespace LeaveManagement.Controllers
         public async Task<IActionResult> RemainingLeaves()
         {
             int currentYear = DateTime.Now.Year;
+            ViewBag.CurrentYear = currentYear;
 
             // 1) Get all employees
             var users = await _userManager.GetUsersInRoleAsync("Employee");

@@ -181,58 +181,40 @@
     </style>
 </head>
 <body>
-    <div class="">
-        <div class="card">
-
-
-
-            <div style="margin-top:18px">
-                <h3 style="margin-bottom:8px">Employee View (what employee will see)</h3>
-                <div class="card">
+    <div class="card">
+        <div style="margin-top:18px">
+            <h3 style="margin-bottom:8px">Monthly Salary Adjustment Summary</h3>
+            <div class="card">
+                @* ===== CASE 1: MODEL NULL ===== *@
+                @if (Model == null)
+                {
+                    <div style="padding:20px; color:red; font-weight:bold;">
+                        No data found.
+                    </div>
+                }
+                @* ===== CASE 2: ADJUSTMENT NULL ===== *@
+                else if (Model.Adjustment == null)
+                {
+                    <div style="padding:20px; color:red; font-weight:bold;">
+                        No salary adjustment found for this month.
+                    </div>
+                }
+                @* ===== CASE 3: VALID DATA ===== *@
+                else
+                {
                     <div style="display:flex;justify-content:space-between;align-items:center">
                         <div>
-                            <!-- CHECK #1 → IF MODEL ITSELF IS NULL -->
-                            @if (Model == null)
-                            {
-                                <div style="padding:20px; color:red; font-weight:bold;">
-                                    No data found.
-                                </div>
-                                return;
-                            }
 
-
-                            <!-- CHECK #2 → IF ADJUSTMENT IS NULL -->
-                            @if (Model.Adjustment == null)
-                            {
-                                <div style="padding:20px; color:red; font-weight:bold;">
-                                    No salary adjustment found for this month.
-                                </div>
-                                return;
-                            }
-                            <div style="font-weight:700">
-                                My Leave Summary — @(new DateTime(Model.Adjustment.Year, Model.Adjustment.Month, 1).ToString("MMMM yyyy"))
-                            </div>
-                            @if (Model?.Adjustment == null)
-                            {
-                                <div style="padding:20px; color:red; font-weight:bold;">
-                                    No salary adjustment found for this month.
-                                </div>
-                                return;
-                            }
                             <div style="color:var(--muted);margin-top:6px">Leaves Taken: <strong id="empLeavesTaken">@Model.Adjustment.LeavesTaken.ToString("F1")</strong> — Free Used: <strong id="empFreeUsed">@Model.Adjustment.FreeLeavesUsed.ToString("F1")</strong> — Paid Deducted: <strong id="empPaidDed">@Model.Adjustment.PaidLeavesDeducted.ToString("F1")</strong> — Free Remaining: <strong id="empFreeRem">@Model.Adjustment.FreeLeavesRemaining.ToString("F1")</strong></div>
                         </div>
-                        @* <div style="margin-top:8px; font-size:16px;">
-                            Employee: <strong>@Model.Employee.FullName</strong>
-                        </div> *@
+
                         <div style="margin-top:6px; font-size:16px;">
                             Final Salary:
                             <strong style="color:#10b981;">
                                 ₹@Model.Adjustment.FinalSalary
                             </strong>
                         </div>
-                        @*  <div>
-                            <button class="btn btn-ghost" id="viewSlip">View Salary Slip</button>
-                        </div> *@
+
                     </div>
 
                     <div class="history">
@@ -295,42 +277,10 @@
 
                         </table>
                     </div>
-                </div>
+                }
             </div>
-
         </div>
     </div>
-
-    <script>
-        // Mock data (would be populated from server in real app)
-        const baseSalary = 41000;
-        const workingDays = 26; // config or compute from month
-        const leavesTaken = 2;
-        let freeAvailable = 5;
-
-        const freeSelect = document.getElementById('freeToApply');
-        const paidSelect = document.getElementById('paidToDeduct');
-        const summaryFree = document.getElementById('summaryFree');
-        const summaryPaid = document.getElementById('summaryPaid');
-        const summaryRemaining = document.getElementById('summaryRemaining');
-        const dayValue = document.getElementById('dayValue');
-        const totalDed = document.getElementById('totalDed');
-        const finalSalary = document.getElementById('finalSalary');
-        const pvBase = document.getElementById('pvBase');
-        const pvDed = document.getElementById('pvDed');
-        const pvFinal = document.getElementById('pvFinal');
-        const empLeavesTaken = document.getElementById('empLeavesTaken');
-        const empFreeUsed = document.getElementById('empFreeUsed');
-        const empPaidDed = document.getElementById('empPaidDed');
-        const empFreeRem = document.getElementById('empFreeRem');
-
-
-        document.getElementById('viewSlip').addEventListener('click',()=>{
-          alert('Salary Slip\n\n'+pvBase.textContent+'\nLeave Deduction: '+pvDed.textContent+'\nFinal: '+pvFinal.textContent);
-        });
-
-
-    </script>
 </body>
 </html>
 
