@@ -243,7 +243,7 @@
                 </div>
 
                 <!-- Leave Table -->
-                <div class="card">
+                <div class="display card" id="leaveTable">
                     <table>
                         <thead>
                             <tr>
@@ -268,8 +268,8 @@
 
                                     <tr onclick="toggleDetails('@rowId')">
                                         <td>@count</td>
-                                        <td>@leave.StartDate.ToShortDateString()</td>
-                                        <td>@leave.EndDate.ToShortDateString()</td>
+                                        <td>@leave.StartDate.ToString("dd/MM/yyyy")</td>
+                                        <td>@leave.EndDate.ToString("dd/MM/yyyy")</td>
                                         <td>1</td>
                                         <td>@(leave.IsHalfDay ? "YES" : "NO")</td>
                                         <td>
@@ -290,10 +290,10 @@
                                     <tr id="@rowId" class="details" style="display:none;">
 
                                         <td colspan="8">
-                                            <strong>Reason:</strong>@leave.Reason<br><br>
-                                            <strong>Applied On:</strong>@leave.AppliedOn.ToString("dd/MM/yyyy")<br>
-                                            <strong>Approver:</strong> Sakshi Bajaj<br>
-                                            <strong>Current Stage:</strong> @leave.Status
+                                            <strong>Reason: </strong>@leave.Reason<br><br>
+                                            <strong>Applied On: </strong>@leave.AppliedOn.ToString("dd/MM/yyyy")<br>
+                                            <strong>Reporting Manager: </strong> Sakshi Bajaj<br>
+                                            <strong>Current Stage: </strong> @leave.Status
                                         </td>
                                     </tr>
                                     count++;
@@ -332,3 +332,14 @@
         _ => "secondary"
     };
 }
+
+<script>
+    $(document).ready(function () {
+        $('#leaveTable').DataTable({
+            pageLength: 10,
+            lengthChange: false,
+            ordering: true,
+            searching: true,
+            info: true
+        });
+    });</script>
