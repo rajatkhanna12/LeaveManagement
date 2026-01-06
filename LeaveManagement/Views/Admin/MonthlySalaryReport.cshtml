@@ -2,11 +2,15 @@
 @{
     ViewData["Title"] = "MonthlySalaryReport";
     Layout = "~/Views/Shared/_ManagerLayout.cshtml";
+    decimal totalFinalSalary = Model?.Sum(x => x.FinalSalary) ?? 0;
+
 }
 <div class="card mt-4">
     <div class="card-header d-flex justify-content-between align-items-center">
         <h5 class="mb-0">Employee List : @ViewBag.Month</h5>
-        
+        <h5 class="mb-0 text-success">
+            Total Salary: ₹ @totalFinalSalary.ToString("#,##,##0", new System.Globalization.CultureInfo("en-IN"))
+        </h5>
     </div>
 
     <div class="table-responsive text-nowrap">
