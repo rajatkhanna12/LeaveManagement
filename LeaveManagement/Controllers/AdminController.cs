@@ -1047,11 +1047,29 @@ namespace LeaveManagement.Controllers
         public async Task<IActionResult> Delete(string id)
         {
             await SetUserInfoAsync();
+
+            if (!Guid.TryParse(id, out Guid guidId))
+            {
+                return BadRequest("Invalid ID format.");
+            }
             var user = await _userManager.FindByIdAsync(id);
             if (user == null) return NotFound();
 
-            var leaveRequests = _context.LeaveRequests.Where(q => q.UserId == id);
-            _context.LeaveRequests.RemoveRange(leaveRequests);
+            var leaveRequests = _context.LeaveRequests.Where(q => q.UserId == user.Id);
+            var tblAttendances = _context.tblAttendances.Where(q => q.UserId == guidId);
+            var salaryRepot = _context.SalaryReports.Where(q => q.UserId == user.Id);
+            var salaryAdjustment = _context.SalaryAdjustments.Where(q => q.EmployeeID == user.Id);
+            var LeaveAdjustment = _context.LeaveAdjustmentHistories.Where(q => q.EmployeeID == user.Id);
+
+
+            // 2. Remove all related records first
+            if (leaveRequests.Any()) _context.LeaveRequests.RemoveRange(leaveRequests);
+            if (tblAttendances.Any()) _context.tblAttendances.RemoveRange(tblAttendances);
+            if (salaryRepot.Any()) _context.SalaryReports.RemoveRange(salaryRepot);
+            if (salaryAdjustment.Any()) _context.SalaryAdjustments.RemoveRange(salaryAdjustment);
+            if (LeaveAdjustment.Any()) _context.LeaveAdjustmentHistories.RemoveRange(LeaveAdjustment);
+
+            // 3. Save these changes to clear the foreign key conflicts
             await _context.SaveChangesAsync();
 
             var result = await _userManager.DeleteAsync(user);
