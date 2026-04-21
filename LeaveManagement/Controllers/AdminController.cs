@@ -1050,6 +1050,10 @@ namespace LeaveManagement.Controllers
             var user = await _userManager.FindByIdAsync(id);
             if (user == null) return NotFound();
 
+            var leaveRequests = _context.LeaveRequests.Where(q => q.UserId == id);
+            _context.LeaveRequests.RemoveRange(leaveRequests);
+            await _context.SaveChangesAsync();
+
             var result = await _userManager.DeleteAsync(user);
             return RedirectToAction("Index");
         }
