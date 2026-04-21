@@ -6,5 +6,6 @@ namespace LeaveManagement.VM
     {
         public ApplicationUser Employee { get; set; } 
         public decimal? FinalSalary { get; set; }  
+        public bool IsPaid { get; set; }  
     }
 }

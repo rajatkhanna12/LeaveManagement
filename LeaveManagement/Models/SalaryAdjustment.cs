@@ -27,6 +27,7 @@ namespace LeaveManagement.Models
 
         // Approval
         public bool IsApproved { get; set; }
+        public bool IsPaid { get; set; }
         public DateTime? ApprovedOn { get; set; }
         public string? ApprovedBy { get; set; }
     }

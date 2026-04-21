@@ -74,6 +74,46 @@ namespace LeaveManagement.Controllers
             ViewBag.AnniversaryEmployees = anniversaryEmployees;
             return View(employees.AsEnumerable());
         }
+        [HttpPost]
+        public async Task<IActionResult> MarkSalaryPaid(string empId)
+        {
+            try
+            {
+                var today = DateTime.Now;
+
+                // previous month calculation (year safe)
+                var previousMonthDate = today.AddMonths(-1);
+
+                int month = previousMonthDate.Month;
+                int year = previousMonthDate.Year;
+
+                var salary = await _context.SalaryAdjustments
+                    .FirstOrDefaultAsync(x => x.EmployeeID == empId
+                                          && x.Month == month
+                                          && x.Year == year);
+
+                if (salary == null)
+                {
+                    return Json(new
+                    {
+                        success = false,
+                        message = "Please adjust salary first, then mark as paid."
+                    });
+                }
+
+                salary.IsPaid = true;
+            
+
+                _context.Update(salary);
+                await _context.SaveChangesAsync();
+
+                return Json(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
         public async Task<IActionResult> MonthlySalaryReport()
         {
             await SetUserInfoAsync();
@@ -86,12 +126,18 @@ namespace LeaveManagement.Controllers
             var salaryAdjustments = await _context.SalaryAdjustments
                             .Where(x => x.Month == month && x.Year == year)
                             .ToListAsync();
-            var viewModel = employees.Select(e => new MonthlySalaryReportVM
+            var viewModel = employees.Select(e =>
             {
-                Employee = e,
-                FinalSalary = salaryAdjustments
-          .FirstOrDefault(x => x.EmployeeID == e.Id)?.FinalSalary
-            });
+                var salary = salaryAdjustments
+                    .FirstOrDefault(x => x.EmployeeID == e.Id);
+
+                return new MonthlySalaryReportVM
+                {
+                    Employee = e,
+                    FinalSalary = salary?.FinalSalary ?? 0,   
+                    IsPaid = salary?.IsPaid ?? false          
+                };
+            }).ToList();
             var prev = today.AddMonths(-1);
             ViewBag.Month = prev.ToString("MMMM yyyy"); ;
             return View(viewModel);
@@ -1843,4 +1889,7 @@ namespace LeaveManagement.Controllers
 
     }
     #endregion
+
+
+
 }
